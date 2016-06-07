@@ -1,0 +1,78 @@
+
+
+ACL2's meta rule and clause processor facilities are designed to allow
+users of ACL2 to write custom proof routines which, once proven
+correct, can be called by the ACL2 prover\footnote{Alternatively, such
+  proof routines may be ``trusted''---used without proof, but at the
+  cost of a ``trust tag'' marking this use as a source of
+  unsoundness.}.
+
+Such proof routines have historically been limited in their use of
+ACL2's database of stored facts and its built-in prover functions.
+For example, a metafunction could call the ACL2 rewriter, but when
+proving this metafunction correct, the result of calling the rewriter
+could not be assumed to be equivalent to the input --- that is, the
+rewriter could not be assumed to be correct.  Somewhat similarly,
+metafunctions and clause processors could both examine the ACL2 world
+(the logical state of the prover, including the database of stored
+facts), but in proving the correctness of these functions, facts
+extracted from the world could not be assumed to be correct.
+
+Meta-extract is an ACL2 feature first introduced in Version 6.0
+(December, 2012).  It allows for certain facts stored in the ACL2
+world and certain ACL2 prover routines to be effectively assumed
+correct when proving the correctness of metafunctions and clause
+processors.
+
+Correctness proofs for metafunctions and clause processors reference a
+function that we will call a \textit{pseudo-evaluator}, typically
+defined via the \texttt{defevaluator} macro.  (Elsewhere in the ACL2
+literature this is simply referred to as an evaluator; however, we
+want to emphasize the difference between a pseudo-evaluator and a true
+term evaluator.)  A pseudo-evaluator is a constrained function about
+which only certain facts are known; these facts are ones that would
+also be true of a ``real'' evaluator capable of fully interpreting any
+ACL2 term.  It is hoped that these facts are sufficient to allow the
+user to prove a metafunction or clause-processor correct as well as if
+they could use a real term evaluator.  To prove a metafunction correct
+the user must show that the pseudo-evaluation of the term output by
+the metafunction is equal (or equivalent) to the pseudo-evaluation of
+the input term.  Intuitively, if this can be proved of a
+pseudo-evaluator, and the only facts known about the pseudo-evaluator
+are ones that are also true of the real evaluator of ACL2 terms, then
+this must also be true of the real evaluator: that is, the evaluations
+of the input and output terms of the metafunction are equivalent, and
+thus the metafunction is correct.
+
+The meta-extract feature allows certain hypotheses to be assumed
+during the proof of correctness of a metafunction.  These meta-extract
+hypotheses are applications of the pseudo-evaluator to calls of the
+functions
+\texttt{meta-extract-contextual-fact} and
+\texttt{meta-extract-global-fact+}.  These functions produce various
+sorts of terms by extracting facts from the ACL2 world and calling
+ACL2 prover subroutines, constructed so that if ACL2 and its logical
+state is sound, the terms produced should always be true.  For some
+examples, these functions can produce:
+\begin{itemize}
+\item the body of a previously proven theorem
+\item the definitional equation of a previously defined function
+\item a term equating a call of a function on quoted constants to the
+  quoted value of that call
+\item a term equating some term $a$ to the result of rewriting $a$
+\item a term describing the typeset of $a$, according to ACL2's type
+  reasoning.
+\end{itemize}
+
+Intuitively, adding a meta-extract hypothesis to a metafunction's
+correctness theorem is allowable because we expect the (real)
+evaluation of any term produced by one of the meta-extract functions
+to return true.  If we prove the pseudo-evaluator theorem with a
+meta-extract hypothesis and, as before, reason that since the theorem
+is true of the pseudo-evaluator, it is also true of the real
+evaluator, then the final step is to say that the meta-extract
+hypothesis using the real evaluator is true (or else ACL2 is already
+unsound).  Therefore we can still conclude that the evaluations of the
+metafunction's output and input terms are equivalent.
+
+
