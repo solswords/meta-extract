@@ -1,12 +1,13 @@
 
 
+\section{Introduction}
+
 ACL2's meta rule and clause processor facilities are designed to allow
-users of ACL2 to write custom proof routines which, once proven
-correct, can be called by the ACL2 prover\footnote{Alternatively, such
-  proof routines may be ``trusted''---used without proof, but at the
+users to write custom proof routines which, once proven
+correct, can be called by the ACL2 prover\footnote{
+  Clause processors may alternatively be ``trusted''---used without proof, but at the
   cost of a ``trust tag'' marking this use as a source of
   unsoundness.}.
-
 Such proof routines have historically been limited in their use of
 ACL2's database of stored facts and its built-in prover functions.
 For example, a metafunction could call the ACL2 rewriter, but when
@@ -20,21 +21,44 @@ extracted from the world could not be assumed to be correct.
 
 Meta-extract is an ACL2 feature first introduced in Version 6.0
 (December, 2012).  It allows for certain facts stored in the ACL2
-world and certain ACL2 prover routines to be effectively assumed
+world and certain ACL2 prover routines to be assumed
 correct when proving the correctness of metafunctions and clause
-processors.
+processors.  In particular, additional \textit{meta-extract hypotheses}
+which imply the correctness of these routines and facts are allowed to
+be present in these correctness theorems. These additional hypotheses
+preserve the soundness of metareasoning in ACL2 because they encode
+assumptions that we are already
+making --- that the facts stored in the ACL2 logical world are true
+and that ACL2's prover routines are sound.
 
-Correctness proofs for metafunctions and clause processors reference a
+\subsection{Intuitive Justification for Meta-extract Hypotheses}
+
+Going forward in this paper, we will primarily address metafunctions
+rather than always referring to metafunctions and clause processors.
+The meta-extract functionality available in clause processors is a
+subset of that available to metafunctions (namely, global facts are
+available but not contextual ones), and the correctness arguments are
+analogous.
+
+Correctness proofs for metafunctions reference a
 function that we will call a \textit{pseudo-evaluator}, typically
 defined via the \texttt{defevaluator} macro.  (Elsewhere in the ACL2
 literature this is simply referred to as an evaluator; however, we
-want to emphasize the difference between a pseudo-evaluator and a true
+want to emphasize the difference between a pseudo-evaluator and a real
 term evaluator.)  A pseudo-evaluator is a constrained function about
 which only certain facts are known; these facts are ones that would
 also be true of a ``real'' evaluator capable of fully interpreting any
 ACL2 term.  It is hoped that these facts are sufficient to allow the
-user to prove a metafunction or clause-processor correct as well as if
-they could use a real term evaluator.  To prove a metafunction correct
+user to prove a metafunction correct as well as if
+they could use a real term evaluator\footnote{
+  It would be unsound to define what we are calling a real evaluator
+  in ACL2---in particular, one that could evaluate terms containing
+  calls of the evaluator itself, or functions that call the evaluator.
+  In order to fix our handwavy argument, you could instead think of
+  introducing an evaluator that can interpret all functions that are
+  defined at the point when the metafunction is being applied.
+}.
+To prove a metafunction correct
 the user must show that the pseudo-evaluation of the term output by
 the metafunction is equal (or equivalent) to the pseudo-evaluation of
 the input term.  Intuitively, if this can be proved of a
@@ -44,8 +68,8 @@ this must also be true of the real evaluator: that is, the evaluations
 of the input and output terms of the metafunction are equivalent, and
 thus the metafunction is correct.
 
-The meta-extract feature allows certain hypotheses to be assumed
-during the proof of correctness of a metafunction.  These meta-extract
+The meta-extract feature allows certain additional hypotheses in the
+statement of the correctness theorem of a metafunction.  These meta-extract
 hypotheses are applications of the pseudo-evaluator to calls of the
 functions
 \texttt{meta-extract-contextual-fact} and
@@ -60,9 +84,13 @@ examples, these functions can produce:
 \item a term equating a call of a function on quoted constants to the
   quoted value of that call
 \item a term equating some term $a$ to the result of rewriting $a$
-\item a term describing the typeset of $a$, according to ACL2's type
+  using \texttt{mfc-rw}
+\item a term describing the type of $a$, according to ACL2's typeset
   reasoning.
 \end{itemize}
+The meta-extract hypothesis allows us to use such facts in our
+metafunction and assume that they are true according to the
+pseudo-evaluator while doing the correctness proof.
 
 Intuitively, adding a meta-extract hypothesis to a metafunction's
 correctness theorem is allowable because we expect the (real)
@@ -74,5 +102,3 @@ evaluator, then the final step is to say that the meta-extract
 hypothesis using the real evaluator is true (or else ACL2 is already
 unsound).  Therefore we can still conclude that the evaluations of the
 metafunction's output and input terms are equivalent.
-
-
