@@ -1,0 +1,67 @@
+\subsection{Using ``meta-extract-user.lisp''}
+
+The community book ``clause-processors/meta-extract-user.lisp'' is
+designed to allow more convenient use of the meta-extract facility.
+The main contribution of this book is in the event-generating macro
+\texttt{def-meta-extract}. For a given pseduo-evaluator \texttt{evl},
+\texttt{def-meta-extract} produces macros
+\texttt{evl-meta-extract-contextual-facts} and
+\texttt{evl-meta-extract-global-facts} that expand to meta-extract
+hypotheses where the \texttt{obj} argument is a call of a ``bad-guy''
+function.  This essentially universally quantifies the \texttt{obj}
+argument:
+\begin{verbatim}
+  (evl (meta-extract-contextual-fact
+         (evl-meta-extract-bad-guy a mfc state)
+         mfc state)
+       a)
+\end{verbatim}
+implies for any \texttt{obj},
+\begin{verbatim}
+  (evl (meta-extract-contextual-fact obj state) a).
+\end{verbatim}
+
+The \texttt{def-meta-extract} utility also proves several theorems
+about the evaluator that obviate the need for the user to reason about
+the specifics of the definitions of
+\texttt{meta-extract-contextual-fact} and
+\texttt{meta-extract-global-fact+} and the proper construction of
+their \texttt{obj} arguments.  For example, this rule shows that
+\texttt{(evl-meta-extract-global-facts)} implies that a theorem looked
+up from the world using \texttt{meta-extract-formula} is correct:
+\begin{verbatim}
+ (defthm evl-meta-extract-formula
+   (implies (and (evl-meta-extract-ev-global-facts)
+                 (equal (w st) (w state)))
+            (evl (meta-extract-formula name st) a)))
+ 
+\end{verbatim}
+This rule shows that
+\texttt{(evl-meta-extract-contextual-facts a)} implies the correctness
+of \texttt{mfc-rw+} (specifically, when \texttt{nil}, meaning
+\texttt{equal}, is given as the equivalence relation argument):
+\begin{verbatim}
+ (defthm evl-meta-extract-rw+-equal
+    (implies (evl-meta-extract-contextual-facts a)
+             (equal (evl (mfc-rw+
+                          term alist obj nil
+                          mfc state :forcep nil)
+                         a)
+                    (evl (sublis-var alist term) a))))
+\end{verbatim}
+
+The theorems provided by \texttt{def-meta-extract} support the following:
+\begin{itemize}
+\item Checking the typeset of a term with \texttt{mfc-ts}
+\item Rewriting a term with \texttt{mfc-rw}
+  (under \texttt{equal}, \texttt{iff}, or other equivalence relations)
+\item Rewriting a term under a substitution with \texttt{mfc-rw+}
+  (under \texttt{equal}, \texttt{iff}, or other equivalence relations)
+\item Proving a term false via linear arithmetic with \texttt{mfc-ap}
+\item Proving a term true via rewriting with \texttt{mfc-relieve-hyp}
+\item Retrieving a formula from the world with \texttt{meta-extract-formula}
+\item Retrieving a rewrite rule formula from a function's \texttt{lemmas} property
+\item Evaluating a function call with \texttt{magic-ev-fncall}.
+\end{itemize}
+Comprehensive documentation is available in the ACL2 combined manual.
+
