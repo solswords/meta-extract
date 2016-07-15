@@ -1,13 +1,9 @@
-
-
-\section{Introduction}
-
 ACL2's meta rule and clause processor facilities are designed to allow
 users to write custom proof routines which, once proven
 correct, can be called by the ACL2 prover\footnote{
   Clause processors may alternatively be ``trusted''---used without proof, but at the
   cost of a ``trust tag'' marking this use as a source of
-  unsoundness.}.
+  unsoundness.\cite{trusted-cl-proc}}.
 Such proof routines have historically been limited in their use of
 ACL2's database of stored facts and its built-in prover functions.
 For example, a metafunction could call the ACL2 rewriter, but when
@@ -48,9 +44,9 @@ want to emphasize the difference between a pseudo-evaluator and a real
 term evaluator.)  A pseudo-evaluator is a constrained function about
 which only certain facts are known; these facts are ones that would
 also be true of a ``real'' evaluator capable of fully interpreting any
-ACL2 term.  It is hoped that these facts are sufficient to allow the
-user to prove a metafunction correct as well as if
-they could use a real term evaluator\footnote{
+ACL2 term.  The intention is for these facts to suffice for
+proving a metafunction correct, without the need for
+a real term evaluator\footnote{
   It would be unsound to define what we are calling a real evaluator
   in ACL2---in particular, one that could evaluate terms containing
   calls of the evaluator itself, or functions that call the evaluator.
@@ -76,29 +72,30 @@ functions
 \texttt{meta-extract-global-fact+}.  These functions produce various
 sorts of terms by extracting facts from the ACL2 world and calling
 ACL2 prover subroutines, constructed so that if ACL2 and its logical
-state is sound, the terms produced should always be true.  For some
-examples, these functions can produce:
+state are sound, the terms produced should always be true.  For
+example, these functions can produce:
 \begin{itemize}
-\item the body of a previously proven theorem
-\item the definitional equation of a previously defined function
+\item the body of a previously proven theorem;
+\item the definitional equation of a previously defined function;
 \item a term equating a call of a function on quoted constants to the
-  quoted value of that call
+  quoted value of that call;
 \item a term equating some term $a$ to the result of rewriting $a$
-  using \texttt{mfc-rw}
-\item a term describing the type of $a$, according to ACL2's typeset
+  using \texttt{mfc-rw}; or
+\item a term describing the type of $a$, according to ACL2's type-set
   reasoning.
 \end{itemize}
-The meta-extract hypothesis allows us to use such facts in our
-metafunction and assume that they are true according to the
+When we use such facts in our metafunction, meta-extract hypotheses
+allow us to assume that they are true according to the
 pseudo-evaluator while doing the correctness proof.
 
-Intuitively, adding a meta-extract hypothesis to a metafunction's
+Intuitively, adding meta-extract hypotheses to a metafunction's
 correctness theorem is allowable because we expect the (real)
 evaluation of any term produced by one of the meta-extract functions
-to return true.  If we prove the pseudo-evaluator theorem with a
-meta-extract hypothesis and, as before, reason that since the theorem
+to return true.  If we prove the pseudo-evaluator theorem with
+meta-extract hypotheses and, as before, reason that since the theorem
 is true of the pseudo-evaluator, it is also true of the real
-evaluator, then the final step is to say that the meta-extract
-hypothesis using the real evaluator is true (or else ACL2 is already
-unsound).  Therefore we can still conclude that the evaluations of the
-metafunction's output and input terms are equivalent.
+evaluator, then the final step is to observe that meta-extract
+hypotheses are true using the real evaluator (or else ACL2 is already
+unsound).  Therefore, even with meta-extract hypotheses, we can still
+conclude that the evaluations of the metafunction's output and input
+terms are equivalent.
