@@ -67,12 +67,8 @@ thus the metafunction is correct.
 The meta-extract feature allows certain additional hypotheses in the
 statement of the correctness theorem of a metafunction.  These meta-extract
 hypotheses are applications of the pseudo-evaluator to calls of the
-functions
-% BOZO how do we put these here without interrupting the flow
-\begin{lstlisting}
-   meta-extract-contextual-fact <\textrm{and}>
-   meta-extract-global-fact+.
- \end{lstlisting}
+functions \texttt{meta\-/extract\-/contextual\-/fact} and
+   \texttt{meta\-/extract\-/global\-/fact+}.
  These functions produce various
 sorts of terms by extracting facts from the ACL2 world and calling
 ACL2 prover subroutines, constructed so that if ACL2 and its logical

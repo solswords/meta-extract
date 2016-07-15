@@ -3,11 +3,22 @@
 % \usepackage{breakurl}             % Not needed if you use pdflatex only.
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{fancyvrb}
+% so we can use \-/ for breakable dashes in long names
+\usepackage[shortcuts]{extdash}
 % \usepackage{bigfoot}
 % \usepackage{tikz}
 
 % \newtheorem{theorem}{Theorem}
 % \newtheorem{corollary}{Corollary}
+
+\usepackage{listings}
+\lstset{ %
+  basicstyle=\normalsize\ttfamily,
+  language=lisp,
+  columns=fullflexible,
+  escapeinside={\<}{\>},
+}
+
 
 \title{Meta-extract}
 \author{Matt Kaufmann
@@ -35,6 +46,10 @@ Austin, TX, USA}
 \section{Introduction}
 \label{sec:intro}
 \input{intro}
+
+\section{Using ``meta-extract-user.lisp''}
+\label{sec:user}
+\input{wrapper}
 
 \section*{Acknowledgements}
 
