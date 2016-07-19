@@ -1,7 +1,7 @@
 The community book ``clause-processors/meta-extract-user.lisp'' is
 designed to allow more convenient use of the meta-extract facility.
 The main contribution of this book is in the event-generating macro
-\texttt{def\-/meta\-/extract}. For a given pseduo-evaluator \texttt{evl},
+\texttt{def\-/meta\-/extract}. For a given pseudo-evaluator \texttt{evl},
 \texttt{def\-/meta\-/extract} produces macros
 \texttt{evl\-/meta\-/extract\-/contextual\-/facts} and
 \texttt{evl\-/meta\-/extract\-/global\-/facts} that expand to meta-extract
@@ -32,7 +32,7 @@ up from the world using \texttt{meta\-/extract\-/formula} is correct:
    (implies (and (evl-meta-extract-ev-global-facts)
                  (equal (w st) (w state)))
             (evl (meta-extract-formula name st) a)))
- 
+
 \end{verbatim}
 This rule shows that
 \texttt{(evl\-/meta\-/extract\-/contextual\-/facts a)} implies the correctness
