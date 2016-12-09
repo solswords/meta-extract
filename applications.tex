@@ -1,2 +1,107 @@
 {\it \color{red} SOL will write this (perhaps including an application
   from Centaur)}
+
+\subsection{Just-expand utility}
+
+The community book ``clause-processors/just-expand.lisp'' provides a
+very simple illustration of the usage of meta-extract.  It uses
+meta-extract only to look up a formula for a function so that it can
+expand that definition.  The core functionality is in the function
+\texttt{expand-this-term}.  That function looks up the rule, or the
+definition of the leading function symbol if an explicit rule is not
+given, using \texttt{meta-extract-formula}.  It then essentially
+applies that rule as an unconditional rewrite.  First it ensures that
+its body is of the form
+\begin{lstlisting}
+ (equal <$\mathit{lhs}$> <$\mathit{rhs}$>).
+\end{lstlisting}
+If so, it tries to unify the input term with $\mathit{lhs}$, obtaining
+a unifying substitution $\sigma$ if successful, and returns the
+subsitution of $\sigma$ into $\mathit{rhs}$.  This procedure is proven
+correct under a meta-extract hypothesis, which is used to reason that
+the formula obtained by looking up the rule is a theorem.
+
+\texttt{Expand-this-term} is used to define two clause processors and
+a meta rule, each of which is proven correct using meta-extract
+hypotheses.  The first clause processor, \texttt{just-expand-cp},
+applies \texttt{expand-this-term} to all subterms of the goal clause
+that match some user-provided patterns.  The second clause processor,
+\texttt{expand-marked-cp}, looks for calls of an identity function
+\texttt{expand-me} and expands the term contained immediately inside
+each such call, removing the \texttt{expand-me} call itself.  The meta
+rule, \texttt{expand-marked-meta}, triggers on \texttt{expand-me} and
+similarly expands the contained terms.
+
+
+\subsection{Rewrite-bounds}
+
+The community book ``centaur/misc/bound-rewriter.lisp'' provides a
+tool for solving certain inequalities: it replaces subterms of an
+inequality with known bounds if those subterms are in monotonic
+positions.  For example, the term $a-b$ monotonically decreases as $b$
+increases, so if we wish to prove $c<a-b$ and we know $B \geq b$, then
+it suffices to prove $c<a-B$.  While this example would be easily
+handled by ACL2's linear arithmetic solver, there are problems that
+the bound rewriter can handle easily that overwhelm ACL2's nonlinear
+solver -- e.g.,
+\begin{verbatim}
+(implies (and (rationalp a) (rationalp b) (rationalp c)
+              (<= 0 a) (<= 0 b) (<= 1 c)
+              (<= a 10) (<= b 20) (<= c 30))
+         (<= (+ (* a b c) (* a b) (* b c) (* a c))
+             (+ (* 10 20 30) (* 10 20) (* 20 30) (* 10 30))))
+\end{verbatim}
+On this formula, a \texttt{:nonlinearp t} hint causes ACL2 to hang indefinitely, while the hint
+\begin{verbatim}
+(rewrite-bounds ((<= a 10)
+                 (<= b 20)
+                 (<= c 30)))
+\end{verbatim}
+solves it instantaneously, by replacing upper-boundable occurrences of
+\texttt{a} by 10, \texttt{b} by 20, and \texttt{c} by 30.
+
+The bound rewriter tool is implemented as a meta rule and uses
+meta-extract extensively.  To determine which subterms are in
+monotonic positions, it uses typeset reasoning to determine the signs
+of subterms.  For example, $a \cdot b$ increases as $b$ increases if
+$a$ is nonnegative and decreases as $b$ increases if $a$ is
+nonpositive; if we can't (weakly) determine the sign of $a$, then we
+can't replace $b$ or any subterm with a bound.  To determine whether a
+proposed bound of a subterm is (contextually) true, it uses
+\texttt{mfc-relieve-hyp} to show it by rewriting, and if that fails,
+\texttt{mfc-ap} to show it by linear arithmetic reasoning.  The
+correctness of these uses of ACL2 reasoning utilities are justified by
+meta-extract-contextual-fact hypotheses.
+
+\subsection{Others}
+
+Several other clause processors in the community books use
+meta-extract solely to be able to extract a formula from the world
+(using \texttt{meta-extract-formula}) and assume it to be true.  For
+example, ``clause-processors/witness-cp.lisp'' provides a framework
+for reasoning about quantification; it uses
+\texttt{meta-extract-formula} to look up a stored fact showing that a
+term representing a universal quantification implies any instance
+of the quantified formula.  Another book,
+``clause-processors/replace-equalities.lisp'' provides a tool for
+replacing known equalities in ways that aren't accessible to the
+rewriter, e.g., replacing a variable with a term.  For example, the
+following is not a valid rewrite rule because its LHS is a variable,
+but it could be a good replace-equalities rule:
+\begin{verbatim}
+ (implies (unify-ok pattern term alist)
+          (equal term
+                 (subsitute pattern (unify-subst pattern term alist))))
+\end{verbatim}
+
+A meta rule for context-sensitive rewriting, accomplishing something
+similar to Greve's ``Nary'' framework \cite{greve06}, is defined in
+``centaur/misc/context-rw.lisp''; it uses meta-extract to allow it to
+trust \texttt{mfc-relieve-hyp}, \texttt{mfc-rw+}, and
+\texttt{magic-ev-fncall}.
+
+The GL framework for bit-level symbolic execution \cite{gl-diss,
+  bit-blasting-GL} uses meta-extract to look up function definitions
+and rewrite rules from the world and to evaluate ground terms using
+\texttt{magic-ev-fncall}.
+
