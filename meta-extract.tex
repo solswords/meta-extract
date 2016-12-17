@@ -11,3 +11,16 @@
 
 \end{enumerate}
 }
+
+% !! Maybe an example could be to simplify
+% (equal (f1 v1) (f2 fv)) to nil when f1 and f2 both have bodies
+% of the form (cons 'K ...) and the two K values differ.
+% Think of (fi x) as "tagging" some function of x, where we have
+% reason to leave each fi disabled, and some tags are re-used but
+% others are not.
+
+% MORE INTERESTING EXAMPLE could be nth-update, for example so that we can
+% leave stobj accessors and updators disabled.  In this section we'd need
+% meta-extract-global-fact for specific fns, but Sol's section could
+% include an example showing how we only need one rule even for fns (and
+% stobjs) not yet defined.

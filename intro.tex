@@ -1,10 +1,18 @@
-ACL2's meta rule and clause processor facilities are designed to allow
+The meta rule and clause processor facilities
+of the ACL2 theorem proving system~\cite{acl2:home}
+are designed to allow
 users to write custom proof routines which, once proven
 correct, can be called by the ACL2 prover\footnote{
   Clause processors may alternatively be ``trusted''---used without proof, but at the
-  cost of a ``trust tag'' marking this use as a source of
+  cost of a {\em trust tag} marking this use as a source of
   unsoundness.\cite{trusted-cl-proc}}.
-Such proof routines have historically been limited in their use of
+These facilities are descended from the meta reasoning capability
+provided by earlier Boyer-Moore provers~\cite[meta].  Relevant
+background can be found in earlier ACL2 papers on meta
+reasoning~\cite{meta-05} and clause processors~\cite{trusted-cl-proc},
+along with ACL2 documentation~\cite{acl2:doc}.
+
+Such meta-level proof routines have historically been limited in their use of
 ACL2's database of stored facts and its built-in prover functions.
 For example, a metafunction could call the ACL2 rewriter, but when
 proving this metafunction correct, the result of calling the rewriter
@@ -26,6 +34,13 @@ preserve the soundness of metareasoning in ACL2 because they encode
 assumptions that we are already
 making --- that the facts stored in the ACL2 logical world are true
 and that ACL2's prover routines are sound.
+
+Note that meta-extract hypotheses can be used to help {\em prove}
+theorems to be stored as meta rules or as clause-processor rules, but
+they have no effect on how those rules are applied during subsequent
+proofs.  For that, we refer readers to existing papers
+(\cite{meta-05,trusted-cl-proc}) as well as documentation~\cite{acl2:doc}
+topics including META, CLAUSE-PROCESSOR, and EXTENDED-METAFUNCTIONS.
 
 \subsection{Intuitive Justification for Meta-extract Hypotheses}
 
