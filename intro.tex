@@ -3,11 +3,11 @@ of the ACL2 theorem proving system~\cite{acl2:home}
 are designed to allow
 users to write custom proof routines which, once proven
 correct, can be called by the ACL2 prover\footnote{
-  Clause processors may alternatively be ``trusted''---used without proof, but at the
-  cost of a {\em trust tag} marking this use as a source of
-  unsoundness.\cite{trusted-cl-proc}}.
+  Clause processors may alternatively be ``trusted''---used without proof---but at the
+  cost of a {\em trust tag} marking this use as a source of potential
+  unsoundness.~\cite{trusted-cl-proc}}.
 These facilities are descended from the meta reasoning capability
-provided by earlier Boyer-Moore provers~\cite[meta].  Relevant
+provided by earlier Boyer-Moore provers~\cite{meta}.  Relevant
 background can be found in earlier ACL2 papers on meta
 reasoning~\cite{meta-05} and clause processors~\cite{trusted-cl-proc},
 along with ACL2 documentation~\cite{acl2:doc}.
@@ -37,12 +37,21 @@ and that ACL2's prover routines are sound.
 
 Note that meta-extract hypotheses can be used to help {\em prove}
 theorems to be stored as meta rules or as clause-processor rules, but
-they have no effect on how those rules are applied during subsequent
-proofs.  For that, we refer readers to existing papers
-(\cite{meta-05,trusted-cl-proc}) as well as documentation~\cite{acl2:doc}
-topics including META, CLAUSE-PROCESSOR, and EXTENDED-METAFUNCTIONS.
-
-\subsection{Intuitive Justification for Meta-extract Hypotheses}
+they have no effect on how those rules are {\em applied} during
+subsequent proofs.  For that, we refer readers to existing papers
+(\cite{meta-05,trusted-cl-proc}) as well as
+documentation~\cite{acl2:doc} topics including
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META}{\underline{META}},
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CLAUSE-PROCESSOR}{\underline{CLAUSE-PROCESSOR}},
+and
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_EXTENDED-METAFUNCTIONS}{\underline{EXTENDED-METAFUNCTIONS}}.
+Also see the topic
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{META-EXTRACT}}
+for (additional) user-level documentation.  Note that references to
+documentation topics, such as those above, are underlined to denote
+hyperlinks to topics in the online
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html}{\underline{documentation}}~\cite{acl2:doc}
+for ACL2 and its books.
 
 Going forward in this paper, we will primarily address metafunctions
 rather than always referring to metafunctions and clause processors.
@@ -50,6 +59,13 @@ The meta-extract functionality available in clause processors is a
 subset of that available to metafunctions (namely, global facts are
 available but not contextual ones), and the correctness arguments are
 analogous.
+
+\subsection{Intuitive Justification for Meta-extract Hypotheses}
+\label{sec:intuitive}
+
+We next explain informally why it is sound to include meta-extract
+hypotheses.  See the {\em Essay on Correctness of Meta Reasoning} in
+the ACL2 source code for a rigorous mathematical argument.
 
 Correctness proofs for metafunctions reference a
 function that we will call a \textit{pseudo-evaluator}, typically
@@ -117,9 +133,17 @@ terms are equivalent.
 
 \subsection{Organization of This Paper}
 
-In Section~\ref{sec:meta-extract} we explain meta-extract hypotheses,
-preceded by an example and followed by an informal sketch of
-correctness.  Section~\ref{sec:user} presents a community book that
+In Section~\ref{sec:meta-extract} we provide examples of meta-extract
+hypotheses and summary documentation of their various forms.
+
+\begin{mycomment}
+  \noindent Section~\ref{sec:meta-extract} (file meta-extract.tex) was
+  originally, I think, going to include an informal sketch of
+  correctness, but it doesn't yet, at least (see comment at the end of
+  that section).
+\end{mycomment}
+
+\noindent Section~\ref{sec:user} presents a community book that
 provides a convenient way to use the meta-extract facility.  We then
-present applications in Section~\ref{sec:applications}.  Finally, we
-conclude after presenting related work in Section~\ref{sec:related}.
+present applications in Section~\ref{sec:applications} and finally, we
+conclude with Section~\ref{sec:conclusion}.

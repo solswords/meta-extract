@@ -5,7 +5,7 @@ The main contribution of this book is in the event-generating macro
 \texttt{def\-/meta\-/extract} produces macros
 \texttt{evl\-/meta\-/extract\-/contextual\-/facts} and
 \texttt{evl\-/meta\-/extract\-/global\-/facts} that expand to meta-extract
-hypotheses where the \texttt{obj} argument is a call of a ``bad-guy''
+hypotheses where the \texttt{obj} argument is a call of a ``bad-guy'' (Skolem)
 function.  This essentially universally quantifies the \texttt{obj}
 argument:
 \begin{verbatim}
@@ -14,12 +14,14 @@ argument:
          mfc state)
        a)
 \end{verbatim}
-implies for any \texttt{obj},
+implies that for any \texttt{obj},
 \begin{verbatim}
   (evl (meta-extract-contextual-fact obj state) a).
 \end{verbatim}
 
-The \texttt{def-meta-extract} utility also proves several theorems
+The
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEF-META-EXTRACT}{\underline{\tt def-meta-extract}}
+utility also proves several theorems
 about the evaluator that obviate the need for the user to reason about
 the specifics of the definitions of
 \texttt{meta\-/extract\-/contextual\-/fact} and
@@ -50,7 +52,7 @@ of \texttt{mfc-rw+} (specifically, when \texttt{nil}, meaning
 
 The theorems provided by \texttt{def\-/meta\-/extract} support the following:
 \begin{itemize}
-\item Checking the typeset of a term with \texttt{mfc-ts}
+\item Checking the type-set of a term with \texttt{mfc-ts}
 \item Rewriting a term with \texttt{mfc-rw}
   (under \texttt{equal}, \texttt{iff}, or other equivalence relations)
 \item Rewriting a term under a substitution with \texttt{mfc-rw+}
@@ -62,4 +64,15 @@ The theorems provided by \texttt{def\-/meta\-/extract} support the following:
 \item Evaluating a function call with \texttt{magic\-/ev\-/fncall}.
 \end{itemize}
 Comprehensive documentation is available in the ACL2 combined
-manual~\cite{acl2:doc}.
+manual~\cite{acl2:doc} under topic DEF-META-EXTRACT.
+
+\begin{mycomment}
+Sol, the list above seems to be more or less just
+  saying that the theorems provided by def-meta-extract are those
+  described in Section~\ref{sec:general} (file meta-extract.tex).
+  That's probably fine, but we should make the connection, I think.
+  I've attempted to do that by saying, at the start of
+  Section~\ref{sec:general}, that ``These forms correspond to the
+  theorems described at the end of Section~\ref{sec:user}.''  Is that
+  sufficient?
+\end{mycomment}

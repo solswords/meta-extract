@@ -1,5 +1,34 @@
-{\it \color{red} One or both of us will write this.  Maybe we'll wait
+\begin{mycomment}
+[Old comment] One or both of us will write this.  Maybe we'll wait
   till a draft of the rest is written, so that we can hit the high
   points here.  Any ideas about future work?  Any lessons learned?
   (It would be cool if some application would likely have been much
-  more difficult to carry out without this.)}
+  more difficult to carry out without this.)
+\end{mycomment}
+
+\begin{mycomment}
+Is there a grep command we can run in books showing/ that we use
+    meta-extract?  I tried
+
+\begin{verbatim}
+time fgrep --include='*.lisp' -ri meta-extract . | fgrep -v system/doc/acl2-doc.lisp
+\end{verbatim}
+
+\noindent but it includes things like {\tt
+boundrw-ev-meta-extract-contextual-facts} and {\tt
+ctx-ev-meta-extract-contextual-facts}, which I don't understand.
+
+Below is an initial stab at the conclusion by Matt, which undoubtedly
+could be improved.  Maybe you can say a bit more, at a high level,
+    about meta-extract at Centaur (even if only referring back to the
+    applications section).
+\end{mycomment}
+
+This paper explains meta-extract hypotheses and shows how they can be
+put to good use, either directly or by way of the {\tt
+def-meta-extract} utility described in Section~\ref{sec:user}.
+
+The history of ACL2 is marked by increasingly sophisticated
+applications of it.  Many advanced features of ACL2 are in regular use
+at Centaur Technology, including meta-extract hypotheses.  We hope
+that this paper contributes to wider successful use of that feature.

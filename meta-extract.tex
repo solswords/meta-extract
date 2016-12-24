@@ -1,26 +1,455 @@
-{\it \color{red} MATT will write this:
+Next we explain meta-extract by first giving two examples and then
+summarizing the general forms of meta-extract hypotheses.
 
-\begin{enumerate}
+\subsection{Tutorial Examples}
 
-\item example
-\item summary of forms (we might need to discuss this)
-\item rough sketch of correctness argument (point to Essay for
-  details; maybe note, without going into it, that attachments present
-  a complication, but need support (originally the restrictions were
-  more draconian))
+We present two examples for the two kinds of meta-extract hypotheses,
+corresponding to evaluation of calls of {\tt
+  meta-extract-contextual-fact} and of {\tt meta-extract-global-fact}.
 
-\end{enumerate}
-}
+\subsubsection{Meta-extract-contextual-fact}
 
-% !! Maybe an example could be to simplify
-% (equal (f1 v1) (f2 fv)) to nil when f1 and f2 both have bodies
-% of the form (cons 'K ...) and the two K values differ.
-% Think of (fi x) as "tagging" some function of x, where we have
-% reason to leave each fi disabled, and some tags are re-used but
-% others are not.
+Our first example is intentionally contrived and quite trivial,
+intended only to provide an easy introduction to meta-extract.  It
+illustrates the use of {\tt meta-extract-contextual-fact}.  The intent
+is to simplify any term of the form {\tt (nth $x$ $lst$)}, when $x$ is
+easily seen by ACL2 to be a symbol in the current context, to {\tt
+  (car $lst$)}.
 
-% MORE INTERESTING EXAMPLE could be nth-update, for example so that we can
-% leave stobj accessors and updators disabled.  In this section we'd need
-% meta-extract-global-fact for specific fns, but Sol's section could
-% include an example showing how we only need one rule even for fns (and
-% stobjs) not yet defined.
+In ACL2, the use of metafunctions is always supported by an evaluator,
+called a {\em pseudo-evaluator} in the preceding section.  Let us
+introduce an evaluator that ``knows'' about the functions relevant to
+this example.
+
+\begin{verbatim}
+(defevaluator nthmeta-ev nthmeta-ev-lst
+  ((typespec-check ts x)
+   (nth n x)
+   (car x)))
+\end{verbatim}
+
+\noindent Next we define a metafunction, intended to replace any term
+{\tt (nth n x)} by a corresponding term {\tt (car x)} when {\tt n} is
+known to be a symbol using type-set reasoning (see
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPE-SET}{\underline{TYPE-SET}}).
+
+\begin{verbatim}
+(defun nth-symbolp-metafn (term mfc state)
+  (declare (xargs :stobjs state))
+  (case-match term
+    (('nth n x)
+     (if (equal (mfc-ts n mfc state :forcep nil)
+                *ts-symbol*)
+         (list 'car x)
+       term))
+    (& term)))
+\end{verbatim}
+
+\noindent Now we can present a meta rule with a meta-extract
+hypothesis.  That hypothesis simplifies to the
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MFC-TS}{\underline{\tt
+    mfc-ts}} call above.  Without that hypothesis the formula below is
+not a theorem, because the function {\tt mfc-ts} has no axiomatic
+properties; all we know about it below is what we are told by the
+meta-extract hypothesis, as discussed further below.
+
+\begin{verbatim}
+(defthm nth-symbolp-meta
+    (implies (nthmeta-ev (meta-extract-contextual-fact
+                          `(:typeset ,(cadr term))
+                          mfc
+                          state)
+                         a)
+             (equal (nthmeta-ev term a)
+                    (nthmeta-ev (nth-symbolp-metafn term mfc state) a)))
+    :rule-classes ((:meta :trigger-fns (nth))))
+\end{verbatim}
+
+To see what the meta-extract hypothesis above gives us, consider the
+following theorem provable by ACL2.
+
+\begin{verbatim}
+(equal (meta-extract-contextual-fact `(:typeset ,x)
+                                      mfc
+                                      state)
+       (list 'typespec-check
+             (list 'quote
+                   (mfc-ts x mfc state :forcep nil))
+             x))
+\end{verbatim}
+
+At a high level, this theorem shows us that {\tt
+  meta-extract-contextual-fact} is computing a term {\tt
+  (typespec-check (quote $ts$) x)}, which asserts that the term {\tt
+  x} belongs to the set of values represented by $ts$.  The
+meta-extract hypothesis indicates {\em evaluation} of this call of
+{\tt typespec-check} and its subterm {\tt (mfc-ts x mfc state :forcep
+  nil)}, which is exactly what is done when evaluating calls of our
+metafunction, {\tt nth-symbolp-metafn}.
+
+We test our meta rule on a term containing a newly-introduced
+function symbol.
+
+\begin{verbatim}
+(defstub foo (x) t)
+
+(thm (implies (symbolp (foo x))
+              (equal (nth (foo x) y)
+                     (car y)))
+     :hints (("Goal" :in-theory '(nth-symbolp-meta))))
+\end{verbatim}
+
+\noindent Indeed, the summary shows the use of the meta rule, {\tt
+  nth-symbolp-meta}.  We can even trace our metafunction: after
+evaluating the form
+
+\begin{verbatim}
+(trace$ (nth-symbolp-metafn
+         :entry
+         (list 'nth-symbolp-metafn term '<mfc> 'state)))
+\end{verbatim}
+
+\noindent we see the following in the proof log for the {\tt thm} call
+above.
+
+\begin{verbatim}
+1> (NTH-SYMBOLP-METAFN (NTH (FOO X) Y)
+                       <MFC> STATE)
+<1 (NTH-SYMBOLP-METAFN (CAR Y))
+\end{verbatim}
+
+\subsubsection{Meta-extract-global-fact}
+
+Our second example is from community book {\tt
+  books/demos/nth-update-nth-meta-extract.lisp}, which uses {\tt
+  meta-extract-global-fact}.  Let us begin by seeing what problem this
+book is attempting to solve.
+
+Consider a
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFSTOBJ}{\underline{\tt
+    defstobj}} event, {\tt (defstobj st fld$_1$ fld$_2$ ... fld$_n$)}.
+A common challenge in reasoning about stobjs is the simplification of
+{\em read-over-write} terms, of the form {\tt (fld$_i$ (update-fld$_j$
+  $v$ st))}, which indicate that we are to read {\tt fld$_i$} after
+updating {\tt fld$_j$}.  That term simplifies to {\tt (fld$_i$ st)}
+when $i \neq j$, and otherwise it simplifies to $v$.  How do we get
+ACL2 to do such simplification automatically?  The following two
+approaches are standard.
+
+\begin{itemize}
+
+\item Disable the stobj accessors and updaters after proving
+  rewrite rules to simplify terms of the form {\tt (fld$_i$
+    (update-fld$_j$ val st))}, to {\tt val} if $i = j$ and to {\tt
+    (fld$_i$ st)} if $i \neq j$.
+
+\item Let the stobj accessors and updaters remain enabled, relying on
+  a rule such as the built-in rewrite rule {\tt nth-update-nth} to
+  rewrite terms, obtained after expanding calls of the accessors and
+  updaters, of the form {\tt (nth $i$ (update-nth $j$ val st))}.
+
+\end{itemize}
+
+The first of these requires $n^2$ rules, which is generally feasible
+but can perhaps get somewhat unwieldy.  The second of these provides a
+simple solution, but when proofs fail, the resulting checkpoints can
+be more difficult to comprehend.
+
+Here, we outline a solution that addresses both of these concerns: a
+macro that generates a suitable meta rule.  Details of this proof
+development may be found in community book {\tt
+  books/\allowbreak{}demos/\allowbreak{}nth-update-nth-meta-extract.lisp}.
+First we introduce our metafunction.  Next, we prove a meta rule for a
+specific stobj.  Finally, we generalize to a macro.
+
+Our metafunction returns the input term unchanged unless it is of the
+form {\tt ($r$ ($w$ $v$ $x$))}, where $r$ and $w$ are {\em reader}
+(accessor) and {\em writer} (updater) functions defined to be calls of
+{\tt nth} and {\tt update-nth}, on explicit indices: {\tt ($r$ $x$)}
+$=$ {\tt (nth '$i$ $x$)} and {\tt ($w$ $v$ $x$)} $=$ {\tt (update-nth
+  '$i$ $v$ $x$)}.  In that case, the function {\tt
+  nth-update-nth-meta-fn-new-term} computes a new term: $v$ if $i =
+j$, and otherwise, {\tt ($r$ $x$)}.
+
+\begin{verbatim}
+(defun nth-update-nth-meta-fn (term mfc state)
+  (declare (xargs :stobjs state)
+           (ignore mfc))
+  (or (nth-update-nth-meta-fn-new-term term state)
+      term))
+\end{verbatim}
+
+Notice below that in computing the new term, the definitions of the
+reader and writer are extracted from the logical world using the
+function, {\tt meta-extract-formula}, which returns the function's
+definitional equation.  For example:
+
+\begin{verbatim}
+ACL2 !>(meta-extract-formula 'atom state)
+(EQUAL (ATOM X) (NOT (CONSP X)))
+ACL2 !>
+\end{verbatim}
+
+\noindent We thus rely on the correctness of {\tt
+  meta-extract-formula} for the equality of the input term and the
+term returned by the following function.
+
+\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+(defun nth-update-nth-meta-fn-new-term (term state)
+  (declare (xargs :stobjs state))
+  (case-match term
+    ((reader (writer val x))
+     (and (not (eq reader 'quote))
+          (not (eq writer 'quote))
+          (let* ((reader-formula (and (symbolp reader)
+                                      (meta-extract-formula reader state)))
+                 (i-rd (fn-nth-index reader reader-formula)))
+            (and
+             i-rd {\em \color{red} ; the body of reader is (nth 'i-rd ...)}
+             (let* ((writer-formula (and (symbolp writer)
+                                         (meta-extract-formula writer state)))
+                    (i-wr (fn-update-nth-index writer writer-formula)))
+               (and
+                i-wr {\em \color{red} ; the body of writer is (update-nth 'i-wr ...)}
+                (if (eql i-rd i-wr)
+                    val
+                  (list reader x))))))))
+    (& nil)))
+\end{Verbatim}
+
+Next we introduce a (pseudo-)evaluator to use in our meta rule.
+
+\begin{verbatim}
+(defevaluator nth-update-nth-ev nth-update-nth-ev-lst
+  ((nth n x)
+   (update-nth n val x)
+   (equal x y)))
+\end{verbatim}
+
+We need to define one more function before presenting our meta rule.
+It takes as input a term {\tt ($f$ $t_1$ $\ldots$ $t_n$)} with list of
+formals {\tt ($v_1$ $\ldots$ $v_n$)}, and builds an alist that maps
+each $v_i$ to the value of $t_i$ in a given alist.  Like our
+metafunction, it consults {\tt meta-extract-formula} to obtain the
+formal parameters of $f$.  An earlier attempt to use the function,
+{\tt formals}, failed: the meta rule's proof needs these formals to
+connect to those found by our metafunction.
+
+\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+(defun meta-extract-alist-rec (formals actuals a)
+  (cond ((endp formals) nil)
+        (t (acons (car formals)
+                  (nth-update-nth-ev (car actuals) a)
+                  (meta-extract-alist-rec (cdr formals) (cdr actuals) a)))))
+
+(defun meta-extract-alist (term a state)
+  (declare (xargs :stobjs state :verify-guards nil))
+  (let* ((fn (car term))
+         (actuals (cdr term))
+         (formula (meta-extract-formula fn state)) {\em \color{red} ; (equal (fn ...) ...)}
+         (formals (cdr (cadr formula))))
+    (meta-extract-alist-rec formals actuals a)))
+\end{Verbatim}
+
+\noindent We now define a stobj and prove a corresponding meta rule.
+
+\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+(defstobj st
+  fld1 fld2 fld3 fld4 fld5 fld6 fld7 fld8 fld9 fld10
+  fld11 fld12 fld13 fld14 fld15 fld16 fld17 fld18 fld19 fld20)
+
+(defthm nth-update-nth-meta-rule-st
+  (implies
+   (and (nth-update-nth-ev {\em \color{red} ; (f (update-g val st))}
+         (meta-extract-global-fact (list :formula (car term)) state)
+         (meta-extract-alist term a state))
+        (nth-update-nth-ev {\em \color{red} ; (update-g val st)}
+         (meta-extract-global-fact (list :formula (car (cadr term)))
+                                   state)
+         (meta-extract-alist (cadr term) a state))
+        (nth-update-nth-ev {\em \color{red} ; (f st) -- note st is (caddr (cadr term))}
+         (meta-extract-global-fact (list :formula (car term)) state)
+         (meta-extract-alist (list (car term)
+                                   (caddr (cadr term)))
+                             a state)))
+   (equal (nth-update-nth-ev term a)
+          (nth-update-nth-ev (nth-update-nth-meta-fn term mfc state) a)))
+  :hints ...
+  :rule-classes ((:meta :trigger-fns (fld1 fld2 ... fld20))))
+\end{Verbatim}
+
+\noindent The theorem below proves more or less instantly using the
+metafunction proved correct above.
+
+\begin{verbatim}
+   (in-theory
+    (disable fld1 fld2 ... fld20 update-fld1 update-fld2 ... update-fld20))
+
+   (defthm test1
+     (equal (fld3 (update-fld1 1
+                   (update-fld2 2
+                    (update-fld3 3
+                     (update-fld4 4
+                      (update-fld3 5
+                       (update-fld6 6 st)))))))
+            3))
+\end{verbatim}
+
+Notice that there is nothing about the meta rule above that is
+specific to the particular stobj, {\tt st}, except for the {\tt
+  :trigger-fns} that it specifies.  So we generalize it to an
+arbitrary stobj.  Our macro takes the name of a stobj and does two
+things: it disables all of the stobj's accessors and updaters, and it
+proves a meta rule that simplifies every term of the form {\tt ($r$
+  $w$ $v$ $s$)}, where $r$ and $s$ are an accessor and updater,
+respectively, for the stobj $s$.  We omit some details here, including
+the definition of function {\tt stobj-accessors-and-updaters}, which
+as its name suggests, returns a list of all stobj accessors and
+updaters for a given stobj.
+
+\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+(defthm nth-update-nth-meta-level
+  {\em{<same formula as in meta rule above>}}
+  :hints (("Goal" :in-theory (enable nth-update-nth-ev-constraint-0)))
+  :rule-classes nil)
+
+(defmacro make-nth-update-nth-meta-stobj (stobj-name)
+  `(make-event
+    (let ((fns (and (symbolp ',stobj-name)
+                    (stobj-accessors-and-updaters ',stobj-name (w state))))
+          (theorem-name ...))
+      (cond
+       ((null fns) {\em <error>})
+       (t (value `(progn
+                    (in-theory (disable ,@fns))
+                    (defthm ,theorem-name
+                      {\em{<same formula as in meta rule above>}}
+                      :hints (("Goal" :by nth-update-nth-meta-level))
+                      :rule-classes ((:meta :trigger-fns ,fns))))))))))
+\end{Verbatim}
+
+The following test succeeds, proving almost instantly by application
+of our metafunction.
+
+\begin{verbatim}
+(defstobj st$
+  fld$1 fld$2 fld$3 fld$4 fld$5 fld$6 fld$7 fld$8 fld$9 fld$10)
+
+(make-nth-update-nth-meta-stobj st$)
+
+(defthm test2
+  (equal (fld$3 (update-fld$1 1
+                 (update-fld$2 2
+                  (update-fld$3 3
+                   (update-fld$4 4
+                    (update-fld$3 5
+                     (update-fld$6 6 st$)))))))
+         3))
+\end{verbatim}
+
+\subsection{General Forms}
+\label{sec:general}
+
+In this section we summarize briefly the forms of meta-extract
+hypotheses.  Additional details may be found in the documentation for
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{META-EXTRACT}}.
+These forms correspond to the theorems described at the end of
+Section~\ref{sec:user}.
+
+Below, let {\tt evl} be the pseudo-evaluator (see
+Section~\ref{sec:intuitive}) used in a meta rule.  The two primary
+forms of meta-extract hypotheses that can be used in that theorem are
+as follows.  In the first, {\tt aa} represents an arbitrary term; in
+the second, {\tt a} must be the second argument of the two calls of
+the (pseudo-)evaluator in the conclusion of the theorem.
+
+\begin{verbatim}
+    (evl (meta-extract-global-fact obj state) aa)
+    (evl (meta-extract-contextual-fact obj mfc state) a)
+\end{verbatim}
+
+The second form above is only legal for meta rules about extended
+metafunctions (which take arguments {\tt mfc} and {\tt state}).  The
+first form above is actually equivalent to the first form below, which
+in turn is a special case of the second form below.
+
+\begin{verbatim}
+    (evl (meta-extract-global-fact+ obj state state) aa)
+    (evl (meta-extract-global-fact+ obj st state) aa)
+\end{verbatim}
+
+In all of these cases, the meta-extract-* function returns the trivial
+term {\tt 'T} in the cases not covered below, and for the last form
+above (which we do not discuss further here), when {\tt st} and {\tt
+  state} have different logical worlds.
+
+Let $f$ be a function symbol and let {\tt state} be the current ACL2
+state.  The value of {\tt (meta-\allowbreak{}extract-\allowbreak{}global-\allowbreak{}fact obj state)} is as
+follows, depending on the value of {\tt obj} as shown below.
+
+\begin{itemize}
+
+\item {\tt (:formula $f$)}: the value of {\tt (meta-extract-formula
+    $f$ state)}, which is the term {\tt (equal ($f$ $x_1$ $\ldots$
+    $x_k$) $b$)}, where {\tt ($x_1$ $\ldots$ $x_k$)} is the formal
+  parameter list for $f$ and $b$ is the body of its definition.
+  Except, if $f$ is constrained or is the name of a theorem, return
+  the constraint or that theorem, respectively.
+
+\item {\tt (:lemma $f$ $n$)}, where $n$ is a natural number: the value
+  of {\tt (nth $n$ (getpropc $f$ 'lemmas nil (w state)))}, assuming
+  that $n$ is a valid index (does not exceed the length of the
+  indicated list).  This value is a {\tt rewrite-rule} record (see the
+  ACL2 sources' definition {\tt (defrec rewrite-rule ...)}), for a
+  rule whose top function symbol is $f$.
+
+\item {\tt (:fncall $f$ $L$)}: the term {\tt (equal $c$ $v$)}, where
+    $c$ is a term representing the application of $f$
+    to the quotations of the values in argument list $L$, and $v$ is
+    the quotation of the value returned by that application.
+
+\end{itemize}
+
+The value of {\tt (meta-extract-contextual-fact obj mfc state)} is as
+follows, depending on the value of {\tt obj} as shown below, where the
+relevant logical world is the one stored in {\tt mfc}, not in {\tt
+  state}.
+
+\begin{itemize}
+
+\item {\tt (:typeset $term \ldots$)}: the value of {\tt
+    (typespec-check '$ts$ $term$)}, for type-set $ts$ of $term$, where
+  {tt (typespec-check ts val)} is true when {\tt val} has type-set
+  {\tt ts}.
+
+\item {(:rw+ $t_0 a o e$)}: the value is the term {\tt ($e$ $t_1$
+    $t_2$)}, where $t_1$ is the result of substituting alist $a$ into
+  term $t_0$ and $t_2$ is the value of {\tt (mfc-rw+ $t_0$ $a$ $o$ $e$
+    mfc state :forcep nil :ttreep nil)}, if $e$ is a known equivalence
+  relation.  Otherwise the value is {\tt (equal $t_1$ $t_2$)} or {\tt
+    (iff $t_1$ $t_2$)} if $e$ is {\tt nil} or {\tt t}, respectively.
+
+\item {\tt (:rw $t_0 o e$)}: equivalent to {\tt (:rw+ $t_0$ nil $o$
+    $e$)}.
+
+\item {\tt (:ap $t_0$)}: the value is the term {\tt (not $t_0$)} if
+  {\tt (mfc-ap $t_0$ mfc state :forcep nil)} is true, else is the term
+  {\tt 'T}.
+
+\item {\tt (:relieve-hyp $h$ $a$ $r$ $tgt$ $b$)}: The value is the
+  term obtained by substitution the alist $a$ into the term $h$ if
+  {\tt (mfc-relieve-hyp $h$ $a$ $r$ $tgt$ $b$ mfc state :forcep nil
+    :ttreep nil)} is true; otherwise the value is the term {\tt 'T}.
+
+\end{itemize}
+
+\begin{mycomment}
+
+  We had discussed including some sort of correctness argument here.
+  But Section~\ref{sec:intuitive} already gives a nice high-level
+  correctness argument, and a detailed argument is given in the ACL2
+  sources, in the Essay on Correctness of Meta Reasoning.  With some
+  effort I could probably write a few remarks here on some of the
+  issues addressed in that correctness argument.  But I'm not sure
+  anyone would care.  Instead,
+\end{mycomment}

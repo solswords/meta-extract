@@ -1,7 +1,13 @@
-{\it \color{red} SOL will write this (perhaps including an application
-  from Centaur)}
+\begin{mycomment}
+[Old comment] SOL will write this (perhaps including an application
+  from Centaur)
+--- Sol, is this done now?
+\end{mycomment}
 
-\subsection{Just-expand utility}
+% Since we used upper-case for subsections in intro.tex, for
+% consistency let's use them in this file, too.  (But we could use
+% lower-case in both; fine with me either way.)
+\subsection{Just-expand Utility}
 
 The community book ``clause-processors/just-expand.lisp'' provides a
 very simple illustration of the usage of meta-extract.  It uses
@@ -32,6 +38,14 @@ each such call, removing the \texttt{expand-me} call itself.  The meta
 rule, \texttt{expand-marked-meta}, triggers on \texttt{expand-me} and
 similarly expands the contained terms.
 
+\begin{mycomment}
+  Sol, it would be interesting to know why, for the two
+  clause-processors above, you used meta-extract rather than just
+  making computed hints (or override hints) that :expand suitable
+  terms.  I {\em do} see why computed hints wouldn't suffice if you
+  were talking about metafunctions instead of clause-processors, since
+  terms to be expanded can arise during rewriting.
+\end{mycomment}
 
 \subsection{Rewrite-bounds}
 
@@ -58,11 +72,15 @@ On this formula, a \texttt{:nonlinearp t} hint causes ACL2 to hang indefinitely,
                  (<= c 30)))
 \end{verbatim}
 solves it instantaneously, by replacing upper-boundable occurrences of
-\texttt{a} by 10, \texttt{b} by 20, and \texttt{c} by 30.
+\texttt{a} by 10, \texttt{b} by 20, and \texttt{c} by 30.  The same
+results are obtained --- a quick proof using {\tt rewrite-bounds} but
+an indefinite hang using nonlinear arithmetic --- if the arithmetic
+expression on the last line of the theorem is replaced by its value,
+7100.
 
 The bound rewriter tool is implemented as a meta rule and uses
 meta-extract extensively.  To determine which subterms are in
-monotonic positions, it uses typeset reasoning to determine the signs
+monotonic positions, it uses type-set reasoning to determine the signs
 of subterms.  For example, $a \cdot b$ increases as $b$ increases if
 $a$ is nonnegative and decreases as $b$ increases if $a$ is
 nonpositive; if we can't (weakly) determine the sign of $a$, then we
@@ -79,14 +97,15 @@ Several other clause processors in the community books use
 meta-extract solely to be able to extract a formula from the world
 (using \texttt{meta-extract-formula}) and assume it to be true.  For
 example, ``clause-processors/witness-cp.lisp'' provides a framework
-for reasoning about quantification; it uses
+for reasoning about quantification (see
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_WITNESS-CP}{\underline{WITNESS-CP}}); it uses
 \texttt{meta-extract-formula} to look up a stored fact showing that a
 term representing a universal quantification implies any instance
 of the quantified formula.  Another book,
 ``clause-processors/replace-equalities.lisp'' provides a tool for
 replacing known equalities in ways that aren't accessible to the
 rewriter, e.g., replacing a variable with a term.  For example, the
-following is not a valid rewrite rule because its LHS is a variable,
+following is not a valid rewrite rule because its left-hand side is a variable,
 but it could be a good replace-equalities rule:
 \begin{verbatim}
  (implies (unify-ok pattern term alist)
@@ -96,12 +115,15 @@ but it could be a good replace-equalities rule:
 
 A meta rule for context-sensitive rewriting, accomplishing something
 similar to Greve's ``Nary'' framework \cite{greve06}, is defined in
-``centaur/misc/context-rw.lisp''; it uses meta-extract to allow it to
+``centaur/misc/context-rw.lisp'' (see
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{CONTEXTUAL-REWRITING}}).
+It uses meta-extract to allow it to
 trust \texttt{mfc-relieve-hyp}, \texttt{mfc-rw+}, and
-\texttt{magic-ev-fncall}.
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MAGIC-EV-FNCALL}{\underline{\tt magic-ev-fncall}}.
 
-The GL framework for bit-level symbolic execution \cite{gl-diss,
+The
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_GL}{\underline{GL}}
+framework for bit-level symbolic execution~\cite{gl-diss,
   bit-blasting-GL} uses meta-extract to look up function definitions
 and rewrite rules from the world and to evaluate ground terms using
 \texttt{magic-ev-fncall}.
-

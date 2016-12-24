@@ -1,5 +1,5 @@
 \documentclass[submission,copyright,creativecommons]{eptcs}
-% \providecommand{\event}{SOS 2007} % Name of the event you are submitting to
+\providecommand{\event}{ACL2 Workshop 2017} % Name of the event you are submitting to
 % \usepackage{breakurl}             % Not needed if you use pdflatex only.
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{fancyvrb}
@@ -8,9 +8,19 @@
 % \usepackage{bigfoot}
 % \usepackage{tikz}
 \usepackage{color}
+\usepackage{framed}
 
 % \newtheorem{theorem}{Theorem}
 % \newtheorem{corollary}{Corollary}
+
+% Adapted from http://tex.stackexchange.com/questions/71371/how-to-change-color-in-an-environment
+\newenvironment{mycomment}
+  {\par\medskip
+   \color{red}%
+   \begin{framed}
+   \ignorespaces}
+ {\end{framed}
+  \medskip}
 
 \usepackage{listings}
 \lstset{ %
@@ -40,7 +50,14 @@ Austin, TX, USA}
 
 \begin{abstract}
 
-{\it \color{red} Abstract: To be written}
+  ACL2 has long supported user-defined simplifiers, so-called {\em
+    metafunctions} and {\em clause processors}, which are installed
+  when corresponding rules of class {\tt :meta} or {\tt
+    :clause-processor} are proved correct.  Starting with ACL2 Version
+  6.0, released in December 2012, an additional capability was
+  supports use of the {\em logical world} in defining these functions
+  and proving them correct.  In this paper we explain this capability
+  and give examples that demonstrate its utility.
 
 \end{abstract}
 
