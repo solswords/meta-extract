@@ -18,6 +18,12 @@ time fgrep --include='*.lisp' -ri meta-extract . | fgrep -v system/doc/acl2-doc.
 boundrw-ev-meta-extract-contextual-facts} and {\tt
 ctx-ev-meta-extract-contextual-facts}, which I don't understand.
 
+[Sol] These are macros for the universally-quantified hyps produced by
+{\tt def-meta-extract}.  I think that's a good way to look for the
+books that define metafunctions/clause-processors using meta-extract;
+I did something like that to find examples for Section
+\ref{sec:applications}.
+
 Below is an initial stab at the conclusion by Matt, which undoubtedly
 could be improved.  Maybe you can say a bit more, at a high level,
     about meta-extract at Centaur (even if only referring back to the
@@ -26,9 +32,9 @@ could be improved.  Maybe you can say a bit more, at a high level,
 
 This paper explains meta-extract hypotheses and shows how they can be
 put to good use, either directly or by way of the {\tt
-def-meta-extract} utility described in Section~\ref{sec:user}.
-
-The history of ACL2 is marked by increasingly sophisticated
-applications of it.  Many advanced features of ACL2 are in regular use
-at Centaur Technology, including meta-extract hypotheses.  We hope
-that this paper contributes to wider successful use of that feature.
+  def-meta-extract} utility described in Section~\ref{sec:user}.  This
+facility has been successfully used to create specialized proof tools
+that are admitted by ACL2 as fully verified metafunctions or
+clause-processors, including the GL bit-blasting framework, which is
+in daily use at Centaur Technology.  We hope that this paper
+contributes to wider successful use of the meta-extract feature.

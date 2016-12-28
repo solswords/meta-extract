@@ -1,7 +1,7 @@
 The community book ``clause-processors/meta-extract-user.lisp'' is
 designed to allow more convenient use of the meta-extract facility.
 The main contribution of this book is in the event-generating macro
-\texttt{def\-/meta\-/extract}. For a given pseudo-evaluator \texttt{evl},
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEF-META-EXTRACT}{\underline{\tt def-meta-extract}}. For a given pseudo-evaluator \texttt{evl},
 \texttt{def\-/meta\-/extract} produces macros
 \texttt{evl\-/meta\-/extract\-/contextual\-/facts} and
 \texttt{evl\-/meta\-/extract\-/global\-/facts} that expand to meta-extract
@@ -16,17 +16,24 @@ argument:
 \end{verbatim}
 implies that for any \texttt{obj},
 \begin{verbatim}
-  (evl (meta-extract-contextual-fact obj state) a).
+  (evl (meta-extract-contextual-fact obj mfc state) a).
 \end{verbatim}
 
-The
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEF-META-EXTRACT}{\underline{\tt def-meta-extract}}
-utility also proves several theorems
-about the evaluator that obviate the need for the user to reason about
+The \texttt{def\-/meta\-/extract} utility also proves several theorems
+about the pseudo-evaluator.  They are proven by
+functional instantiation of similar theorems proved in
+``meta-extract-user.lisp'' about a base evaluator that only supports
+the six functions {\tt typespec-check}, {\tt if}, {\tt equal}, {\tt
+  not}, {\tt iff}, and {\tt implies}; this means that {\tt evl} must
+also support these six functions for the utility to work.
+
+
+The theorems proved by \texttt{def\-/meta\-/extract} obviate the need for the user to reason about
 the specifics of the definitions of
 \texttt{meta\-/extract\-/contextual\-/fact} and
-\texttt{meta\-/extract\-/global\-/fact+} and the proper construction of
-their \texttt{obj} arguments.  For example, this rule shows that
+\texttt{meta\-/extract\-/global\-/fact+} and the proper construction
+of their \texttt{obj} arguments.  They theorems attempt to support
+all the forms listed in Section \ref{sec:general}.  For example, this rule shows that
 \texttt{(evl\-/meta\-/extract\-/global\-/facts)} implies that a theorem looked
 up from the world using \texttt{meta\-/extract\-/formula} is correct:
 \begin{verbatim}
@@ -49,22 +56,32 @@ of \texttt{mfc-rw+} (specifically, when \texttt{nil}, meaning
                          a)
                     (evl (sublis-var alist term) a))))
 \end{verbatim}
+The above rule involves the system function {\tt sublis-var}, which
+substitutes {\tt alist} into {\tt term} but reduces ground calls of
+primitive functions to their values.  In order to reason about
+sublis-var, the pseudo-evaluator should support all of the primitive
+functions that it treats specially.  The community book
+``clause-processors/sublis-var-meaning.lisp'' defines a
+pseudo-evaluator {\tt cterm-ev} that supports exactly these functions
+and proves the following theorem that describes how {\tt sublis-var} evaluates:
+\begin{verbatim}
+(defthm eval-of-sublis-var
+  (implies (and (pseudo-termp x)
+                (not (assoc nil alist)))
+           (equal (cterm-ev (sublis-var alist x) a)
+                  (cterm-ev x (append (cterm-ev-alist alist a) a)))))
+\end{verbatim}
 
-The theorems provided by \texttt{def\-/meta\-/extract} support the following:
-\begin{itemize}
-\item Checking the type-set of a term with \texttt{mfc-ts}
-\item Rewriting a term with \texttt{mfc-rw}
-  (under \texttt{equal}, \texttt{iff}, or other equivalence relations)
-\item Rewriting a term under a substitution with \texttt{mfc-rw+}
-  (under \texttt{equal}, \texttt{iff}, or other equivalence relations)
-\item Proving a term false via linear arithmetic with \texttt{mfc-ap}
-\item Proving a term true via rewriting with \texttt{mfc-relieve-hyp}
-\item Retrieving a formula from the world with \texttt{meta\-/extract\-/formula}
-\item Retrieving a rewrite rule formula from a function's \texttt{lemmas} property
-\item Evaluating a function call with \texttt{magic\-/ev\-/fncall}.
-\end{itemize}
-Comprehensive documentation is available in the ACL2 combined
-manual~\cite{acl2:doc} under topic DEF-META-EXTRACT.
+To reason about {\tt mfc-rw+}, {\tt mfc-rw}, and {\tt
+  mfc-relieve-hyp}, whose meta-extract assumptions all involve {\tt
+  sublis-var}, one can define a pseudo-evaluator that supports both
+the functions required for \texttt{def\-/meta\-/extract} and for {\tt
+  sublis-var}.  Community book ``centaur/misc/context-rw.lisp'', for
+example, defines a pseudo-evaluator supporting all these functions,
+uses {\tt def-meta-extract}, and functionally instantiates the above
+theorem about {\tt sublis-var} to allow it to reason about {\tt
+  mfc-rw+}.
+
 
 \begin{mycomment}
 Sol, the list above seems to be more or less just
@@ -75,4 +92,13 @@ Sol, the list above seems to be more or less just
   Section~\ref{sec:general}, that ``These forms correspond to the
   theorems described at the end of Section~\ref{sec:user}.''  Is that
   sufficient?
+
+  [Sol] - I switched it around so that instead of listing the theorems
+  here I just say they try to support all the forms listed in Section
+  \ref{sec:general}.
+
+  I could add a little bit about what it would look like to prove
+  (say) the theorem from the second example using one bad-guy hyp
+  instead of three specific hyps but I'm not sure if it would clarify
+  much.
 \end{mycomment}

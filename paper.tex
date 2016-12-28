@@ -30,6 +30,7 @@
   escapeinside={\<}{\>},
 }
 
+\newcommand*{\var}[1]{\mathit{#1}}
 
 \title{Meta-extract}
 \author{Matt Kaufmann
@@ -53,11 +54,16 @@ Austin, TX, USA}
   ACL2 has long supported user-defined simplifiers, so-called {\em
     metafunctions} and {\em clause processors}, which are installed
   when corresponding rules of class {\tt :meta} or {\tt
-    :clause-processor} are proved correct.  Starting with ACL2 Version
-  6.0, released in December 2012, an additional capability was
-  supports use of the {\em logical world} in defining these functions
-  and proving them correct.  In this paper we explain this capability
-  and give examples that demonstrate its utility.
+    :clause-processor} are proved correct.  Historically, such
+  simplifiers could access the logical world at execution time and
+  could call certain built-in proof tools, but could not assume the
+  soundness of the proof tools or the truth of any facts extracted
+  from the world when proving a simplifier correct.  Starting with
+  ACL2 Version 6.0, released in December 2012, an additional
+  capability was added which allows the correctness proofs of
+  simplifiers to assume the correctness of some such proof tools and
+  extracted facts.  In this paper we explain this capability and give
+  examples that demonstrate its utility.
 
 \end{abstract}
 

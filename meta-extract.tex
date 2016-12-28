@@ -45,10 +45,20 @@ known to be a symbol using type-set reasoning (see
     (& term)))
 \end{verbatim}
 
-\noindent Now we can present a meta rule with a meta-extract
-hypothesis.  That hypothesis simplifies to the
+\noindent When the input term matches {\tt (nth $n$ $x$)}, this calls
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MFC-TS}{\underline{\tt
-    mfc-ts}} call above.  Without that hypothesis the formula below is
+    mfc-ts}}
+to deduce the possible types of $n$.  If that type-set equals {\tt
+  *ts-symbol*} then that term must evaluate to a symbol, and the term
+can be reduced to {\tt (car $x$)}.
+(This is an unnecessarily strong check: it means ACL2's determination
+was that the possible types of $n$ included all three of the basic
+types {\tt T}, {\tt NIL}, and non-Boolean symbols.  If ACL2 was able
+to rule out any of those three possibilities, the function would
+fail.)
+
+ Now we can present a meta rule with a meta-extract
+hypothesis.  Without that hypothesis the formula below is
 not a theorem, because the function {\tt mfc-ts} has no axiomatic
 properties; all we know about it below is what we are told by the
 meta-extract hypothesis, as discussed further below.
@@ -82,10 +92,27 @@ At a high level, this theorem shows us that {\tt
   meta-extract-contextual-fact} is computing a term {\tt
   (typespec-check (quote $ts$) x)}, which asserts that the term {\tt
   x} belongs to the set of values represented by $ts$.  The
-meta-extract hypothesis indicates {\em evaluation} of this call of
-{\tt typespec-check} and its subterm {\tt (mfc-ts x mfc state :forcep
-  nil)}, which is exactly what is done when evaluating calls of our
-metafunction, {\tt nth-symbolp-metafn}.
+meta-extract hypothesis applies the pseudo-evaluator to this term, and
+since {\tt typespec-check} is one of its known functions, the
+hypothesis reduces to
+\begin{verbatim}
+  (typespec-check (mfc-ts (cadr term) mfc state :forcep nil)
+                  (nthmeta-ev (cadr term) a)).
+\end{verbatim}
+\noindent The interesting case in proving our metafunction correct is
+when this {\tt mfc-ts} call equals {\tt *ts-symbol*}.  In this case the hypothesis becomes
+\begin{verbatim}
+  (typespec-check *ts-symbol* (nthmeta-ev (cadr term) a))
+\end{verbatim}
+\noindent which, when expanded, implies that the evaluation of {\tt
+  (cadr term)} may either be {\tt T}, {\tt NIL}, or a non-Boolean
+symbol.  These three easy cases are then sufficient to prove {\tt nth-symbolp-meta}.
+
+\begin{mycomment}
+  Do we need to discuss the application of the meta rule?  As
+  indicated in the introduction, nothing about the application of
+  metafunctions or clause processors has changed.
+\end{mycomment}
 
 We test our meta rule on a term containing a newly-introduced
 function symbol.
@@ -124,6 +151,14 @@ Our second example is from community book {\tt
   books/demos/nth-update-nth-meta-extract.lisp}, which uses {\tt
   meta-extract-global-fact}.  Let us begin by seeing what problem this
 book is attempting to solve.
+
+\begin{mycomment}
+  I like this section but it's pretty long --- about 3.5 pages.  Could
+  we omit the details about the macro that generalizes this to an
+  arbitrary stobj and just assert that it's easy to do?  I think most
+  people who will understand this paper could figure out how to do
+  that.
+\end{mycomment}
 
 Consider a
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFSTOBJ}{\underline{\tt
@@ -353,8 +388,8 @@ of our metafunction.
 In this section we summarize briefly the forms of meta-extract
 hypotheses.  Additional details may be found in the documentation for
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{META-EXTRACT}}.
-These forms correspond to the theorems described at the end of
-Section~\ref{sec:user}.
+% These forms correspond to the theorems described at the end of
+% Section~\ref{sec:user}.
 
 Below, let {\tt evl} be the pseudo-evaluator (see
 Section~\ref{sec:intuitive}) used in a meta rule.  The two primary
@@ -378,68 +413,117 @@ in turn is a special case of the second form below.
     (evl (meta-extract-global-fact+ obj st state) aa)
 \end{verbatim}
 
-In all of these cases, the meta-extract-* function returns the trivial
-term {\tt 'T} in the cases not covered below, and for the last form
-above (which we do not discuss further here), when {\tt st} and {\tt
-  state} have different logical worlds.
+The last form supports clause processors that modify state as long as
+they do not change the logical world; it produces the same value as
+the previous form as long as both {\tt st} and {\tt state} have equal
+world fields.
 
-Let $f$ be a function symbol and let {\tt state} be the current ACL2
-state.  The value of {\tt (meta-\allowbreak{}extract-\allowbreak{}global-\allowbreak{}fact obj state)} is as
-follows, depending on the value of {\tt obj} as shown below.
+If the arguments to the meta-extract-* function are somehow malformed,
+then it returns the trivial term {\tt 'T}, which is not of any use in
+proving a metafunction correct.  Otherwise, each invocation produces a
+term that states the ``correctness'' of an invocation of some
+utility, such as {\tt mfc-rw+}, {\tt meta-extract-formula}, etc.  The
+terms produced for different kinds of invocation vary according to the
+particular concept of correctness appropriate to the utility in
+question.
+
+\begin{mycomment}
+  I think it would be nice to explain a little bit more in these
+  listings rather than just describing exactly the term that each
+  invocation produces.  Ideally I think we should convey for each form:
+  \begin{itemize}
+  \item what utility it allows metafunctions to use
+  \item how the term that is produced implies the ``correctness'' of
+    an invocation of that utility
+  \item why we believe the term produced to always be true.
+  \end{itemize}
+  I've done a pass to move toward this, but you can revert to your
+  previous version if you'd rather continue from that point...
+\end{mycomment}
+
+We now describe the allowed {\tt obj} arguments to {\tt
+  meta-extract-global-fact} and the terms they produce:
 
 \begin{itemize}
 
-\item {\tt (:formula $f$)}: the value of {\tt (meta-extract-formula
-    $f$ state)}, which is the term {\tt (equal ($f$ $x_1$ $\ldots$
-    $x_k$) $b$)}, where {\tt ($x_1$ $\ldots$ $x_k$)} is the formal
-  parameter list for $f$ and $b$ is the body of its definition.
-  Except, if $f$ is constrained or is the name of a theorem, return
-  the constraint or that theorem, respectively.
+\item {\tt (:formula $f$)} produces the value of {\tt
+    (meta-extract-formula $f$ state)}, which allows metafunctions to
+  assume that any invocation of {\tt meta-extract-formula} produces a
+  true formula.  {\tt meta-extract-formula} looks up various kinds of
+  formulas from the world:
+  \begin{itemize}
+  \item the body of $f$ if it is a theorem name
+  \item the definitional equation of $f$ if it is a defined function
+  \item the constraint of $f$ if it is a constrained function
+  \item the defchoose axiom of $f$ if it is a defchoose function.
+  \end{itemize}
+  This straightforwardly allows {\tt meta-extract-formula} to be
+  assumed correct in metafunctions.
 
-\item {\tt (:lemma $f$ $n$)}, where $n$ is a natural number: the value
-  of {\tt (nth $n$ (getpropc $f$ 'lemmas nil (w state)))}, assuming
-  that $n$ is a valid index (does not exceed the length of the
-  indicated list).  This value is a {\tt rewrite-rule} record (see the
-  ACL2 sources' definition {\tt (defrec rewrite-rule ...)}), for a
-  rule whose top function symbol is $f$.
-
-\item {\tt (:fncall $f$ $L$)}: the term {\tt (equal $c$ $v$)}, where
-    $c$ is a term representing the application of $f$
-    to the quotations of the values in argument list $L$, and $v$ is
-    the quotation of the value returned by that application.
+\item {\tt (:lemma $f$ $n$)} produces a term corresponding to the
+  $n$th rewrite rule stored in the {\tt lemmas} property of function
+  $f$, which allows any such rule to be assumed correct in a
+  metafunction.  The term returned is the value of
+  \begin{lstlisting}[basicstyle=\linespread{0.4}\normalsize\ttfamily]
+    (rewrite-rule-term (nth '<$n$> (getpropc '<$f$> 'lemmas nil (w state))))<\textrm{,}>
+  \end{lstlisting}
+  assuming that $n$ is a valid index (does not exceed
+  the length of the indicated list).  Here {\tt rewrite-rule-term}
+  transforms a {\tt rewrite-rule} record structure into a term such as
+  \begin{lstlisting}[basicstyle=\linespread{0.4}\normalsize\ttfamily]
+    (implies <$\var{hyps}$> (<$\var{equiv}$> <$\var{lhs}$> <$\var{rhs}$>))<\textrm{.}>
+  \end{lstlisting}
+ 
+\item {\tt (:fncall $f$ $L$)} produces a term {\tt (equal $c$ '$v$)}, where
+    $c$ is the application of $f$ to the quotations of the values in argument list $L$, and $v$ is
+    the value of that call as evaluated by
+    {\tt magic-ev-fncall}.  This allows metafunctions to assume that {\tt magic-ev-fncall}
+    correctly evaluates function applications.
 
 \end{itemize}
 
-The value of {\tt (meta-extract-contextual-fact obj mfc state)} is as
-follows, depending on the value of {\tt obj} as shown below, where the
-relevant logical world is the one stored in {\tt mfc}, not in {\tt
-  state}.
+The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as follows:
 
 \begin{itemize}
 
-\item {\tt (:typeset $term \ldots$)}: the value of {\tt
-    (typespec-check '$ts$ $term$)}, for type-set $ts$ of $term$, where
-  {tt (typespec-check ts val)} is true when {\tt val} has type-set
-  {\tt ts}.
+\item {\tt (:typeset $\var{term}$)} produces a term stating the correctness of
+    the typeset produced by {\tt mfc-ts} for $\var{term}$.  Specifically, it produces the term
+    {\tt (typespec-check '$\var{ts}$ $\var{term}$)}, where $\var{ts}$ is
+    the result of {\tt (mfc-ts $\var{term}$ mfc state :forcep nil :ttreep nil)} and
+    {\tt (typespec-check ts val)} is true when {\tt val}'s actual type is in the type-set {\tt ts}.
 
-\item {(:rw+ $t_0 a o e$)}: the value is the term {\tt ($e$ $t_1$
-    $t_2$)}, where $t_1$ is the result of substituting alist $a$ into
-  term $t_0$ and $t_2$ is the value of {\tt (mfc-rw+ $t_0$ $a$ $o$ $e$
-    mfc state :forcep nil :ttreep nil)}, if $e$ is a known equivalence
-  relation.  Otherwise the value is {\tt (equal $t_1$ $t_2$)} or {\tt
-    (iff $t_1$ $t_2$)} if $e$ is {\tt nil} or {\tt t}, respectively.
+  \item {(:rw+ $\var{term}\ \var{alist}\ \var{obj}\ \var{equiv}$)}
+    produces a term stating that {\tt mfc-rw+} correctly rewrites
+    $\var{term}$ under substitution $\var{alist}$ with objective
+    $\var{obj}$ under equivalence relation $\var{equiv}$.  The form of the term produced is
+  \begin{lstlisting}[basicstyle=\linespread{0.4}\normalsize\ttfamily]
+    (<$\var{equiv}$> <$\var{term}'$> <$\var{rw}$>)
+  \end{lstlisting}
+  where $\var{term}'$ is the new term formed by substituting
+  $\var{alist}$ into $\var{term}$ and $\var{rw}$ is the result of the call
+  {\tt (mfc-rw+ $\var{term}\ \var{alist}\ \var{obj}\ \var{equiv}$ mfc state :forcep nil :ttreep nil)}.
+  (Actually, the $\var{equiv}$ argument may also be {\tt T} meaning
+  {\tt IFF} or {\tt NIL} meaning {\tt EQUAL}.)
 
-\item {\tt (:rw $t_0 o e$)}: equivalent to {\tt (:rw+ $t_0$ nil $o$
-    $e$)}.
+\item {(:rw $\var{term}\ \var{obj}\ \var{equiv}$)} is similar to the
+  {\tt :rw+} form above, but instead of {\tt mfc-rw+} it supports {\tt
+    mfc-rw}, which takes no $\var{alist}$ argument.  Instead, {\tt
+    NIL} is used for the substitution.
 
-\item {\tt (:ap $t_0$)}: the value is the term {\tt (not $t_0$)} if
-  {\tt (mfc-ap $t_0$ mfc state :forcep nil)} is true, else is the term
-  {\tt 'T}.
+\item {\tt (:ap $\var{term}$)} uses {\tt mfc-ap} to derive a linear
+  arithmetic contradiction indicating that $\var{term}$ is false, and
+  produces {\tt (not $\var{term}$)} if that is successful, that is, if
+  {\tt (mfc-ap $\var{term}$ mfc state :forcep nil)} returns true;
+  otherwise it just produces {\tt 'T}.
 
-\item {\tt (:relieve-hyp $h$ $a$ $r$ $tgt$ $b$)}: The value is the
-  term obtained by substitution the alist $a$ into the term $h$ if
-  {\tt (mfc-relieve-hyp $h$ $a$ $r$ $tgt$ $b$ mfc state :forcep nil
-    :ttreep nil)} is true; otherwise the value is the term {\tt 'T}.
+\item {\tt (:relieve-hyp $\var{hyp}\ \var{alist}\ \var{rune}\ 
+    \var{target}\ \var{backptr}$)} uses {\tt mfc-relieve-hyp} to
+  attempt to prove that $\var{hyp}$ holds under substitution
+  $\var{alist}$, and produces the substitution of
+  $\var{alist}$ into $\var{hyp}$ if successful, that is, if
+  {\tt (mfc-relieve-hyp $\var{hyp}\ \var{alist}\ \var{rune}\ 
+    \var{target}\ \var{backptr}$ mfc state :forcep nil :ttreep nil)}
+  returns true; otherwise, {\tt 'T}.
 
 \end{itemize}
 
@@ -452,4 +536,9 @@ relevant logical world is the one stored in {\tt mfc}, not in {\tt
   effort I could probably write a few remarks here on some of the
   issues addressed in that correctness argument.  But I'm not sure
   anyone would care.  Instead,
+
+  [Sol] -- I agree; I don't think we need to include a more detailed
+  proof of correctness here.  If we do our job right above then
+  readers can see why we believe each term produced by the
+  meta-extract-* functions to be true.
 \end{mycomment}

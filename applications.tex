@@ -1,12 +1,23 @@
-\begin{mycomment}
-[Old comment] SOL will write this (perhaps including an application
-  from Centaur)
---- Sol, is this done now?
-\end{mycomment}
+% \begin{mycomment}
+% [Old comment] SOL will write this (perhaps including an application
+%   from Centaur)
+% --- Sol, is this done now?
+% \end{mycomment}
 
 % Since we used upper-case for subsections in intro.tex, for
 % consistency let's use them in this file, too.  (But we could use
 % lower-case in both; fine with me either way.)
+
+\begin{mycomment}
+  I was thinking of this as some examples readers could look at to
+  show how meta-extract is used in practice, but now that we have the
+  examples from the previous section maybe that shouldn't be the
+  focus.  Instead, maybe we really want to say what the most important
+  uses of it so far have been, and just show that it really is useful
+  in building sophisticated tools.  So, de-emphasize the just-expand
+  utility and spend a bit more time on GL?
+\end{mycomment}
+
 \subsection{Just-expand Utility}
 
 The community book ``clause-processors/just-expand.lisp'' provides a
@@ -45,6 +56,12 @@ similarly expands the contained terms.
   terms.  I {\em do} see why computed hints wouldn't suffice if you
   were talking about metafunctions instead of clause-processors, since
   terms to be expanded can arise during rewriting.
+
+  [Sol] One place it's used is in a hint that inducts and then
+  immediately expands the calls of the given function in the induction
+  conclusion but not the induction hyps.  I'm not sure how deep we
+  need to go with motivation for each of these so I'm not sure if I
+  should say anything about it in the paper.
 \end{mycomment}
 
 \subsection{Rewrite-bounds}
