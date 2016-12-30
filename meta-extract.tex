@@ -155,8 +155,8 @@ Therefore, the following test of the example above yields no surprises.
 
 \subsubsection{Meta-extract-global-fact}
 
-Our second example is from community book {\tt
-  books/demos/nth-update-nth-meta-extract.lisp}, which uses {\tt
+Our second example is from community book
+  ``demos/nth-update-nth-meta-extract.lisp'', which uses {\tt
   meta-extract-global-fact}.  Let us begin by seeing what problem this
 book is attempting to solve.
 
@@ -203,11 +203,11 @@ be more difficult to comprehend.
 
 Here, we outline a solution that addresses both of these concerns: a
 macro that generates a suitable meta rule.  Details of this proof
-development may be found in community book {\tt
-  books/\allowbreak{}demos/\allowbreak{}nth-update-nth-meta-extract.lisp}.
+development may be found in community book
+``demos/\allowbreak{}nth-update-nth-meta-extract.lisp''.
 First we introduce our metafunction.  Next, we prove a meta rule for a
 specific stobj.  Finally, we mention a macro that generates a version
-of this rule that is suitable for a specified stobj.
+of this rule that is suitable for an arbitrary specified stobj.
 
 Our metafunction returns the input term unchanged unless it is of the
 form {\tt ($r$ ($w$ $v$ $x$))}, where $r$ and $w$ are {\em reader}
@@ -344,8 +344,7 @@ applies the metafunction proved correct above.
 Notice that there is nothing about the meta rule above that is
 specific to the particular stobj, {\tt st}, except for the {\tt
   :trigger-fns} that it specifies.  In the community book mentioned
-above ({\tt
-  books/demos/nth-\allowbreak{}update-\allowbreak{}nth-\allowbreak{}meta-\allowbreak{}extract.lisp}), we define a macro
+above (``demos/nth-\allowbreak{}update-\allowbreak{}nth-\allowbreak{}meta-\allowbreak{}extract.lisp''), we define a macro
 that automates the generation of such a meta rule for an
 arbitrary stobj.  Our macro takes the name of a stobj, $s$, and does two
 things: it disables all of the stobj's accessors and updaters, and it

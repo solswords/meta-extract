@@ -16,6 +16,25 @@
   uses of it so far have been, and just show that it really is useful
   in building sophisticated tools.  So, de-emphasize the just-expand
   utility and spend a bit more time on GL?
+
+  [Matt, replacing what I wrote in my 12/28 email] I'm probably not
+  understanding your point, since to me, ``how meta-extract is used in
+  practice'' and ``most important uses of it so far'' are almost the
+  same.  Maybe your point was that it's better to focus on the most
+  {\em important} uses than it is to focus on the practicality of a
+  wide {\em range} of uses.  If so, I guess I sort of agree if I had
+  to choose; but I think both are really good.  And really, the
+  section already fleshes out the range of uses while mentioning some
+  important ones, notably GL.  Anyhow, I'll probably be happy with
+  whatever you'd like to do here.  In particular, if you care to
+  provide a bit more detail about how meta-extract supports GL, that
+  would be fine; but I can live with what we already have, too.  Oh,
+  and it looks like you might be concerned about overlap between this
+  section and the previous two sections, but I think each section
+  makes its own contribution: Section~\ref{sec:meta-extract} shows how
+  meta-extract works, Section~\ref{sec:user} shows your
+  bad-guy-based tools, and this section shows wide applicability,
+  sometimes providing important capabilities.
 \end{comment}
 
 \subsection{Just-expand Utility}
@@ -34,7 +53,7 @@ its body is of the form
 \end{lstlisting}
 If so, it tries to unify the input term with $\mathit{lhs}$, obtaining
 a unifying substitution $\sigma$ if successful, and returns the
-subsitution of $\sigma$ into $\mathit{rhs}$.  This procedure is proven
+substitution of $\sigma$ into $\mathit{rhs}$.  This procedure is proven
 correct under a meta-extract hypothesis, which is used to reason that
 the formula obtained by looking up the rule is a theorem.
 
@@ -62,6 +81,13 @@ similarly expands the contained terms.
   conclusion but not the induction hyps.  I'm not sure how deep we
   need to go with motivation for each of these so I'm not sure if I
   should say anything about it in the paper.
+
+  [Matt] Hmmm, but your description doesn't make it clear to me where
+  the expand-me calls come from when using expand-marked-meta to
+  expand certain terms produced by induction.  I agree with your
+  general uncertainty about the value of saying much about
+  expand-marked-meta, but as a reader I'd like to get just a quick
+  sense of the flow that results in its application.
 \end{comment}
 
 \subsection{Rewrite-bounds}
@@ -115,7 +141,7 @@ meta-extract solely to be able to extract a formula from the world
 (using \texttt{meta-extract-formula}) and assume it to be true.  For
 example, ``clause-processors/witness-cp.lisp'' provides a framework
 for reasoning about quantification (see
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_WITNESS-CP}{\underline{WITNESS-CP}}); it uses
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_WITNESS-CP}{\underline{witness-cp}}); it uses
 \texttt{meta-extract-formula} to look up a stored fact showing that a
 term representing a universal quantification implies any instance
 of the quantified formula.  Another book,
@@ -130,10 +156,23 @@ but it could be a good replace-equalities rule:
                  (subsitute pattern (unify-subst pattern term alist))))
 \end{verbatim}
 
+\begin{comment}
+Above, ``subsitute'' looks like a typo.  Probably you meant
+``substitute'', but probably, you really meant
+``substitute-into-term''.  When I read this I thought it said
+``substitute'', and I thought it was weird to use a generic sort of
+list utility to create a term.  So I looked at
+clause-processors/replace-equalities.lisp and found
+substitute-into-term.  Maybe the reader could do that too, but I very
+slightly prefer just using substitute-into-term.  You get to decide --
+but of course something needs to be done about the typo,
+``subsitute''.
+\end{comment}
+
 A meta rule for context-sensitive rewriting, accomplishing something
 similar to Greve's ``Nary'' framework \cite{greve06}, is defined in
 ``centaur/misc/context-rw.lisp'' (see
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{CONTEXTUAL-REWRITING}}).
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{contextual-rewriting}}).
 It uses meta-extract to allow it to
 trust \texttt{mfc-relieve-hyp}, \texttt{mfc-rw+}, and
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MAGIC-EV-FNCALL}{\underline{\tt magic-ev-fncall}}.
