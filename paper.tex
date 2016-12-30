@@ -13,14 +13,28 @@
 % \newtheorem{theorem}{Theorem}
 % \newtheorem{corollary}{Corollary}
 
-% Adapted from http://tex.stackexchange.com/questions/71371/how-to-change-color-in-an-environment
-\newenvironment{mycomment}
+% The first of the following two definitions of the comment
+% environment is adapted from
+% http://tex.stackexchange.com/questions/71371/how-to-change-color-in-an-environment
+% while the second comes from a package.  Choose the first to see
+% comments and the second to hide them.
+
+\newenvironment{comment}
   {\par\medskip
    \color{red}%
    \begin{framed}
    \ignorespaces}
  {\end{framed}
   \medskip}
+
+% \usepackage{comment}
+
+% Neither of the following worked for me:
+
+%\newenvironment{mycomment}{{\begin{comment}}}{{\end{comment}}}
+
+% \let\mycomment\comment
+% \let\endmycomment\endcomment
 
 \usepackage{listings}
 \lstset{ %

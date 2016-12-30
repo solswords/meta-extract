@@ -6,6 +6,10 @@ summarizing the general forms of meta-extract hypotheses.
 We present two examples for the two kinds of meta-extract hypotheses,
 corresponding to evaluation of calls of {\tt
   meta-extract-contextual-fact} and of {\tt meta-extract-global-fact}.
+(Since a call {\tt (meta-extract-global-fact obj state)} abbreviates
+the call {\tt (meta-extract-global-fact+ obj state state)}, we are
+thus effectively illustrating {\tt meta-extract-global-fact+} as
+well.)
 
 \subsubsection{Meta-extract-contextual-fact}
 
@@ -30,8 +34,9 @@ this example.
 
 \noindent Next we define a metafunction, intended to replace any term
 {\tt (nth n x)} by a corresponding term {\tt (car x)} when {\tt n} is
-known to be a symbol using type-set reasoning (see
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPE-SET}{\underline{TYPE-SET}}).
+known to be a symbol using
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPE-SET}{\underline{type-set}}
+reasoning.
 
 \begin{verbatim}
 (defun nth-symbolp-metafn (term mfc state)
@@ -50,14 +55,13 @@ known to be a symbol using type-set reasoning (see
     mfc-ts}}
 to deduce the possible types of $n$.  If that type-set equals {\tt
   *ts-symbol*} then that term must evaluate to a symbol, and the term
-can be reduced to {\tt (car $x$)}.
-(This is an unnecessarily strong check: it means ACL2's determination
+can be reduced to {\tt (car $x$)}.\footnote{This is an unnecessarily strong check: it means ACL2's determination
 was that the possible types of $n$ included all three of the basic
 types {\tt T}, {\tt NIL}, and non-Boolean symbols.  If ACL2 was able
 to rule out any of those three possibilities, the function would
-fail.)
+fail to simplify the term.}
 
- Now we can present a meta rule with a meta-extract
+Now we can present a meta rule with a meta-extract
 hypothesis.  Without that hypothesis the formula below is
 not a theorem, because the function {\tt mfc-ts} has no axiomatic
 properties; all we know about it below is what we are told by the
@@ -65,17 +69,16 @@ meta-extract hypothesis, as discussed further below.
 
 \begin{verbatim}
 (defthm nth-symbolp-meta
-    (implies (nthmeta-ev (meta-extract-contextual-fact
-                          `(:typeset ,(cadr term))
-                          mfc
-                          state)
+    (implies (nthmeta-ev (meta-extract-contextual-fact `(:typeset ,(cadr term))
+                                                       mfc
+                                                       state)
                          a)
              (equal (nthmeta-ev term a)
                     (nthmeta-ev (nth-symbolp-metafn term mfc state) a)))
     :rule-classes ((:meta :trigger-fns (nth))))
 \end{verbatim}
 
-To see what the meta-extract hypothesis above gives us, consider the
+\noindent To see what the meta-extract hypothesis above gives us, consider the
 following theorem provable by ACL2.
 
 \begin{verbatim}
@@ -88,12 +91,12 @@ following theorem provable by ACL2.
              x))
 \end{verbatim}
 
-At a high level, this theorem shows us that {\tt
+\noindent At a high level, this theorem shows us that {\tt
   meta-extract-contextual-fact} is computing a term {\tt
-  (typespec-check (quote $ts$) x)}, which asserts that the term {\tt
+  (\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPESPEC-CHECK}{\underline{typespec-check}} (quote $ts$) x)}, which asserts that the term {\tt
   x} belongs to the set of values represented by $ts$.  The
 meta-extract hypothesis applies the pseudo-evaluator to this term, and
-since {\tt typespec-check} is one of its known functions, the
+since {\tt typespec-\allowbreak{}check} is one of its known functions, the
 hypothesis reduces to
 \begin{verbatim}
   (typespec-check (mfc-ts (cadr term) mfc state :forcep nil)
@@ -105,45 +108,50 @@ when this {\tt mfc-ts} call equals {\tt *ts-symbol*}.  In this case the hypothes
   (typespec-check *ts-symbol* (nthmeta-ev (cadr term) a))
 \end{verbatim}
 \noindent which, when expanded, implies that the evaluation of {\tt
-  (cadr term)} may either be {\tt T}, {\tt NIL}, or a non-Boolean
-symbol.  These three easy cases are then sufficient to prove {\tt nth-symbolp-meta}.
+  (cadr term)} must be a
+symbol, which enables the proof of {\tt nth-symbolp-meta}.
 
-\begin{mycomment}
+\begin{comment}
   Do we need to discuss the application of the meta rule?  As
   indicated in the introduction, nothing about the application of
   metafunctions or clause processors has changed.
-\end{mycomment}
 
-We test our meta rule on a term containing a newly-introduced
-function symbol.
+  [Matt] Excellent point.  I've made this much shorter and explained
+  that it's just business as usual, since I think that's worth
+  emphasizing.  But if you want to delete all of it, please feel free;
+  in particular, we should delete it without a moment's thought if we
+  need the space.
+\end{comment}
+
+Recall that meta-extract hypotheses do not affect the {\em
+  applications} of meta rules; they only support their proofs.
+Therefore, the following test of the example above yields no surprises.
 
 \begin{verbatim}
 (defstub foo (x) t)
-
 (thm (implies (symbolp (foo x))
-              (equal (nth (foo x) y)
-                     (car y)))
+              (equal (nth (foo x) y) (car y)))
      :hints (("Goal" :in-theory '(nth-symbolp-meta))))
 \end{verbatim}
 
-\noindent Indeed, the summary shows the use of the meta rule, {\tt
-  nth-symbolp-meta}.  We can even trace our metafunction: after
-evaluating the form
-
-\begin{verbatim}
-(trace$ (nth-symbolp-metafn
-         :entry
-         (list 'nth-symbolp-metafn term '<mfc> 'state)))
-\end{verbatim}
-
-\noindent we see the following in the proof log for the {\tt thm} call
-above.
-
-\begin{verbatim}
-1> (NTH-SYMBOLP-METAFN (NTH (FOO X) Y)
-                       <MFC> STATE)
-<1 (NTH-SYMBOLP-METAFN (CAR Y))
-\end{verbatim}
+%%% \noindent Indeed, the summary shows the use of the meta rule, {\tt
+%%%   nth-symbolp-meta}.  We can even trace our metafunction: after
+%%% evaluating the form
+%%%
+%%% \begin{verbatim}
+%%% (trace$ (nth-symbolp-metafn
+%%%          :entry
+%%%          (list 'nth-symbolp-metafn term '<mfc> 'state)))
+%%% \end{verbatim}
+%%%
+%%% \noindent we see the following in the proof log for the {\tt thm} call
+%%% above.
+%%%
+%%% \begin{verbatim}
+%%% 1> (NTH-SYMBOLP-METAFN (NTH (FOO X) Y)
+%%%                        <MFC> STATE)
+%%% <1 (NTH-SYMBOLP-METAFN (CAR Y))
+%%% \end{verbatim}
 
 \subsubsection{Meta-extract-global-fact}
 
@@ -152,13 +160,16 @@ Our second example is from community book {\tt
   meta-extract-global-fact}.  Let us begin by seeing what problem this
 book is attempting to solve.
 
-\begin{mycomment}
+\begin{comment}
   I like this section but it's pretty long --- about 3.5 pages.  Could
   we omit the details about the macro that generalizes this to an
   arbitrary stobj and just assert that it's easy to do?  I think most
   people who will understand this paper could figure out how to do
   that.
-\end{mycomment}
+
+  [Matt] Good idea -- I've done that, leaving only a brief description
+  of the macro.
+\end{comment}
 
 Consider a
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFSTOBJ}{\underline{\tt
@@ -185,7 +196,7 @@ approaches are standard.
 
 \end{itemize}
 
-The first of these requires $n^2$ rules, which is generally feasible
+\noindent The first of these requires $n^2$ rules, which is generally feasible
 but can perhaps get somewhat unwieldy.  The second of these provides a
 simple solution, but when proofs fail, the resulting checkpoints can
 be more difficult to comprehend.
@@ -195,7 +206,8 @@ macro that generates a suitable meta rule.  Details of this proof
 development may be found in community book {\tt
   books/\allowbreak{}demos/\allowbreak{}nth-update-nth-meta-extract.lisp}.
 First we introduce our metafunction.  Next, we prove a meta rule for a
-specific stobj.  Finally, we generalize to a macro.
+specific stobj.  Finally, we mention a macro that generates a version
+of this rule that is suitable for a specified stobj.
 
 Our metafunction returns the input term unchanged unless it is of the
 form {\tt ($r$ ($w$ $v$ $x$))}, where $r$ and $w$ are {\em reader}
@@ -313,12 +325,11 @@ connect to those found by our metafunction.
   :rule-classes ((:meta :trigger-fns (fld1 fld2 ... fld20))))
 \end{Verbatim}
 
-\noindent The theorem below proves more or less instantly using the
-metafunction proved correct above.
+\noindent The proof of the theorem below takes no measurable time, and
+applies the metafunction proved correct above.
 
 \begin{verbatim}
-   (in-theory
-    (disable fld1 fld2 ... fld20 update-fld1 update-fld2 ... update-fld20))
+   (in-theory (disable fld1 ... fld20 update-fld1 ... update-fld20))
 
    (defthm test1
      (equal (fld3 (update-fld1 1
@@ -332,55 +343,59 @@ metafunction proved correct above.
 
 Notice that there is nothing about the meta rule above that is
 specific to the particular stobj, {\tt st}, except for the {\tt
-  :trigger-fns} that it specifies.  So we generalize it to an
-arbitrary stobj.  Our macro takes the name of a stobj and does two
+  :trigger-fns} that it specifies.  In the community book mentioned
+above ({\tt
+  books/demos/nth-\allowbreak{}update-\allowbreak{}nth-\allowbreak{}meta-\allowbreak{}extract.lisp}), we define a macro
+that automates the generation of such a meta rule for an
+arbitrary stobj.  Our macro takes the name of a stobj, $s$, and does two
 things: it disables all of the stobj's accessors and updaters, and it
 proves a meta rule that simplifies every term of the form {\tt ($r$
-  $w$ $v$ $s$)}, where $r$ and $s$ are an accessor and updater,
-respectively, for the stobj $s$.  We omit some details here, including
-the definition of function {\tt stobj-accessors-and-updaters}, which
-as its name suggests, returns a list of all stobj accessors and
-updaters for a given stobj.
-
-\begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
-(defthm nth-update-nth-meta-level
-  {\em{<same formula as in meta rule above>}}
-  :hints (("Goal" :in-theory (enable nth-update-nth-ev-constraint-0)))
-  :rule-classes nil)
-
-(defmacro make-nth-update-nth-meta-stobj (stobj-name)
-  `(make-event
-    (let ((fns (and (symbolp ',stobj-name)
-                    (stobj-accessors-and-updaters ',stobj-name (w state))))
-          (theorem-name ...))
-      (cond
-       ((null fns) {\em <error>})
-       (t (value `(progn
-                    (in-theory (disable ,@fns))
-                    (defthm ,theorem-name
-                      {\em{<same formula as in meta rule above>}}
-                      :hints (("Goal" :by nth-update-nth-meta-level))
-                      :rule-classes ((:meta :trigger-fns ,fns))))))))))
-\end{Verbatim}
-
-The following test succeeds, proving almost instantly by application
-of our metafunction.
-
-\begin{verbatim}
-(defstobj st$
-  fld$1 fld$2 fld$3 fld$4 fld$5 fld$6 fld$7 fld$8 fld$9 fld$10)
-
-(make-nth-update-nth-meta-stobj st$)
-
-(defthm test2
-  (equal (fld$3 (update-fld$1 1
-                 (update-fld$2 2
-                  (update-fld$3 3
-                   (update-fld$4 4
-                    (update-fld$3 5
-                     (update-fld$6 6 st$)))))))
-         3))
-\end{verbatim}
+  ($w$ $v$ $s$))}, where $r$ and $w$ are an accessor and updater,
+respectively, for the stobj $s$.
+%%% We omit some details here, including
+%%% the definition of function {\tt stobj-accessors-and-updaters}, which
+%%% as its name suggests, returns a list of all stobj accessors and
+%%% updaters for a given stobj.
+%%%
+%%% \begin{Verbatim}[commandchars=\\\{\},fontsize=\small]
+%%% (defthm nth-update-nth-meta-level
+%%%   {\em{<same formula as in meta rule above>}}
+%%%   :hints (("Goal" :in-theory (enable nth-update-nth-ev-constraint-0)))
+%%%   :rule-classes nil)
+%%%
+%%% (defmacro make-nth-update-nth-meta-stobj (stobj-name)
+%%%   `(make-event
+%%%     (let ((fns (and (symbolp ',stobj-name)
+%%%                     (stobj-accessors-and-updaters ',stobj-name (w state))))
+%%%           (theorem-name ...))
+%%%       (cond
+%%%        ((null fns) {\em <error>})
+%%%        (t (value `(progn
+%%%                     (in-theory (disable ,@fns))
+%%%                     (defthm ,theorem-name
+%%%                       {\em{<same formula as in meta rule above>}}
+%%%                       :hints (("Goal" :by nth-update-nth-meta-level))
+%%%                       :rule-classes ((:meta :trigger-fns ,fns))))))))))
+%%% \end{Verbatim}
+%%%
+%%% The following test succeeds, proving almost instantly by application
+%%% of our metafunction.
+%%%
+%%% \begin{verbatim}
+%%% (defstobj st$
+%%%   fld$1 fld$2 fld$3 fld$4 fld$5 fld$6 fld$7 fld$8 fld$9 fld$10)
+%%%
+%%% (make-nth-update-nth-meta-stobj st$)
+%%%
+%%% (defthm test2
+%%%   (equal (fld$3 (update-fld$1 1
+%%%                  (update-fld$2 2
+%%%                   (update-fld$3 3
+%%%                    (update-fld$4 4
+%%%                     (update-fld$3 5
+%%%                      (update-fld$6 6 st$)))))))
+%%%          3))
+%%% \end{verbatim}
 
 \subsection{General Forms}
 \label{sec:general}
@@ -422,40 +437,46 @@ If the arguments to the meta-extract-* function are somehow malformed,
 then it returns the trivial term {\tt 'T}, which is not of any use in
 proving a metafunction correct.  Otherwise, each invocation produces a
 term that states the ``correctness'' of an invocation of some
-utility, such as {\tt mfc-rw+}, {\tt meta-extract-formula}, etc.  The
+utility, such as {\tt mfc-rw+} or {\tt meta-\allowbreak{}extract-\allowbreak{}formula}.  The
 terms produced for different kinds of invocation vary according to the
 particular concept of correctness appropriate to the utility in
 question.
 
-\begin{mycomment}
-  I think it would be nice to explain a little bit more in these
-  listings rather than just describing exactly the term that each
-  invocation produces.  Ideally I think we should convey for each form:
-  \begin{itemize}
-  \item what utility it allows metafunctions to use
-  \item how the term that is produced implies the ``correctness'' of
-    an invocation of that utility
-  \item why we believe the term produced to always be true.
-  \end{itemize}
-  I've done a pass to move toward this, but you can revert to your
-  previous version if you'd rather continue from that point...
-\end{mycomment}
+
+%%% \begin{comment}
+%%%   I think it would be nice to explain a little bit more in these
+%%%   listings rather than just describing exactly the term that each
+%%%   invocation produces.  Ideally I think we should convey for each form:
+%%%   \begin{itemize}
+%%%   \item what utility it allows metafunctions to use
+%%%   \item how the term that is produced implies the ``correctness'' of
+%%%     an invocation of that utility
+%%%   \item why we believe the term produced to always be true.
+%%%   \end{itemize}
+%%%   I've done a pass to move toward this, but you can revert to your
+%%%   previous version if you'd rather continue from that point...
+%%% \end{comment}
+% -- Agreed!  Nicely done; thanks.
 
 We now describe the allowed {\tt obj} arguments to {\tt
-  meta-extract-global-fact} and the terms they produce:
+  meta-extract-global-fact} and the terms they produce.  The
+documentation for
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_EXTENDED-METAFUNCTIONS}{\underline{extended-metafunctions}}
+explains meta-level functions discussed below, such as {\tt mfc-rw}
+and {\tt mfc-ap}.
 
 \begin{itemize}
 
 \item {\tt (:formula $f$)} produces the value of {\tt
     (meta-extract-formula $f$ state)}, which allows metafunctions to
   assume that any invocation of {\tt meta-extract-formula} produces a
-  true formula.  {\tt meta-extract-formula} looks up various kinds of
+  true formula.  {\tt Meta-extract-formula} looks up various kinds of
   formulas from the world:
   \begin{itemize}
   \item the body of $f$ if it is a theorem name
   \item the definitional equation of $f$ if it is a defined function
   \item the constraint of $f$ if it is a constrained function
-  \item the defchoose axiom of $f$ if it is a defchoose function.
+  \item the defchoose axiom of $f$ if it is a \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFCHOOSE}{\underline{\tt defchoose}} function.
   \end{itemize}
   This straightforwardly allows {\tt meta-extract-formula} to be
   assumed correct in metafunctions.
@@ -468,26 +489,28 @@ We now describe the allowed {\tt obj} arguments to {\tt
     (rewrite-rule-term (nth '<$n$> (getpropc '<$f$> 'lemmas nil (w state))))<\textrm{,}>
   \end{lstlisting}
   assuming that $n$ is a valid index (does not exceed
-  the length of the indicated list).  Here {\tt rewrite-rule-term}
+  the length of the indicated list).  Here {\tt rewrite-\allowbreak{}rule-\allowbreak{}term}
   transforms a {\tt rewrite-rule} record structure into a term such as
   \begin{lstlisting}[basicstyle=\linespread{0.4}\normalsize\ttfamily]
     (implies <$\var{hyps}$> (<$\var{equiv}$> <$\var{lhs}$> <$\var{rhs}$>))<\textrm{.}>
   \end{lstlisting}
- 
+
 \item {\tt (:fncall $f$ $L$)} produces a term {\tt (equal $c$ '$v$)}, where
-    $c$ is the application of $f$ to the quotations of the values in argument list $L$, and $v$ is
-    the value of that call as evaluated by
-    {\tt magic-ev-fncall}.  This allows metafunctions to assume that {\tt magic-ev-fncall}
+    $c$ is the call that applies $f$ to the quotations of the values in argument list $L$, and $v$ is
+    the value of that call computed by
+    \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MAGIC-EV-FNCALL}{\underline{\tt
+        magic-\allowbreak{}ev-\allowbreak{}fncall}}.  This allows
+    metafunctions to assume that {\tt magic-ev-fncall}
     correctly evaluates function applications.
 
 \end{itemize}
 
-The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as follows:
+The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as follows.
 
 \begin{itemize}
 
 \item {\tt (:typeset $\var{term}$)} produces a term stating the correctness of
-    the typeset produced by {\tt mfc-ts} for $\var{term}$.  Specifically, it produces the term
+    the type-set produced by {\tt mfc-ts} for $\var{term}$.  Specifically, it produces the term
     {\tt (typespec-check '$\var{ts}$ $\var{term}$)}, where $\var{ts}$ is
     the result of {\tt (mfc-ts $\var{term}$ mfc state :forcep nil :ttreep nil)} and
     {\tt (typespec-check ts val)} is true when {\tt val}'s actual type is in the type-set {\tt ts}.
@@ -516,29 +539,29 @@ The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as fol
   {\tt (mfc-ap $\var{term}$ mfc state :forcep nil)} returns true;
   otherwise it just produces {\tt 'T}.
 
-\item {\tt (:relieve-hyp $\var{hyp}\ \var{alist}\ \var{rune}\ 
+\item {\tt (:relieve-hyp $\var{hyp}\ \var{alist}\ \var{rune}\
     \var{target}\ \var{backptr}$)} uses {\tt mfc-relieve-hyp} to
   attempt to prove that $\var{hyp}$ holds under substitution
   $\var{alist}$, and produces the substitution of
   $\var{alist}$ into $\var{hyp}$ if successful, that is, if
-  {\tt (mfc-relieve-hyp $\var{hyp}\ \var{alist}\ \var{rune}\ 
+  {\tt (mfc-relieve-hyp $\var{hyp}\ \var{alist}\ \var{rune}\
     \var{target}\ \var{backptr}$ mfc state :forcep nil :ttreep nil)}
   returns true; otherwise, {\tt 'T}.
 
 \end{itemize}
 
-\begin{mycomment}
-
-  We had discussed including some sort of correctness argument here.
-  But Section~\ref{sec:intuitive} already gives a nice high-level
-  correctness argument, and a detailed argument is given in the ACL2
-  sources, in the Essay on Correctness of Meta Reasoning.  With some
-  effort I could probably write a few remarks here on some of the
-  issues addressed in that correctness argument.  But I'm not sure
-  anyone would care.  Instead,
-
-  [Sol] -- I agree; I don't think we need to include a more detailed
-  proof of correctness here.  If we do our job right above then
-  readers can see why we believe each term produced by the
-  meta-extract-* functions to be true.
-\end{mycomment}
+%%%\begin{comment}
+%%%
+%%%  We had discussed including some sort of correctness argument here.
+%%%  But Section~\ref{sec:intuitive} already gives a nice high-level
+%%%  correctness argument, and a detailed argument is given in the ACL2
+%%%  sources, in the Essay on Correctness of Meta Reasoning.  With some
+%%%  effort I could probably write a few remarks here on some of the
+%%%  issues addressed in that correctness argument.  But I'm not sure
+%%%  anyone would care.  Instead,
+%%%
+%%%  [Sol] -- I agree; I don't think we need to include a more detailed
+%%%  proof of correctness here.  If we do our job right above then
+%%%  readers can see why we believe each term produced by the
+%%%  meta-extract-* functions to be true.
+%%%\end{comment}

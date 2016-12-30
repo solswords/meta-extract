@@ -3,7 +3,8 @@ of the ACL2 theorem proving system~\cite{acl2:home}
 are designed to allow
 users to write custom proof routines which, once proven
 correct, can be called by the ACL2 prover\footnote{
-  Clause processors may alternatively be ``trusted''---used without proof---but at the
+  Clause processors may alternatively be ``trusted'' --- used without
+  proof --- but at the
   cost of a {\em trust tag} marking this use as a source of potential
   unsoundness.~\cite{trusted-cl-proc}}.
 These facilities are descended from the meta reasoning capability
@@ -39,7 +40,7 @@ Note that meta-extract hypotheses can be used to help {\em prove}
 theorems to be stored as meta rules or as clause-processor rules, but
 they have no effect on how those rules are {\em applied} during
 subsequent proofs.  For that, we refer readers to existing papers
-(\cite{meta-05,trusted-cl-proc}) as well as
+\cite{meta-05,trusted-cl-proc} as well as
 documentation~\cite{acl2:doc} topics including
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META}{\underline{META}},
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CLAUSE-PROCESSOR}{\underline{CLAUSE-PROCESSOR}},
@@ -60,26 +61,33 @@ subset of that available to metafunctions (namely, global facts are
 available but not contextual ones), and the correctness arguments are
 analogous.
 
-\subsection{Intuitive Justification for Meta-extract Hypotheses}
+% Sol: I changed the title just below because if the subsection looks
+% like it's only about correctness, some might skip it, even though it
+% contains important stuff (including the notion of pseudo-evaluator).
+\subsection{Meta-extract Hypotheses}
 \label{sec:intuitive}
 
-We next explain informally why it is sound to include meta-extract
-hypotheses.  See the {\em Essay on Correctness of Meta Reasoning} in
+We next introduce the various meta-extract hypotheses and
+explain informally why it is sound to include them.
+See the {\em Essay on Correctness of Meta Reasoning} in
 the ACL2 source code for a rigorous mathematical argument.
 
-Correctness proofs for metafunctions reference a
+Correctness theorems for metafunctions are stated using a
 function that we will call a \textit{pseudo-evaluator}, typically
-defined via the \texttt{defevaluator} macro.  (Elsewhere in the ACL2
+defined via the
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFEVALUATOR}{\underline{\tt defevaluator}}
+macro.  (Elsewhere in the ACL2
 literature this is simply referred to as an evaluator; however, we
 want to emphasize the difference between a pseudo-evaluator and a real
-term evaluator.)  A pseudo-evaluator is a constrained function about
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TERM}{\underline{term}}
+evaluator.)  A pseudo-evaluator is a constrained function about
 which only certain facts are known; these facts are ones that would
 also be true of a ``real'' evaluator capable of fully interpreting any
 ACL2 term.  The intention is for these facts to suffice for
 proving a metafunction correct, without the need for
 a real term evaluator\footnote{
   It would be unsound to define what we are calling a real evaluator
-  in ACL2---in particular, one that could evaluate terms containing
+  in ACL2 --- in particular, one that could evaluate terms containing
   calls of the evaluator itself, or functions that call the evaluator.
   In order to fix our handwavy argument, you could instead think of
   introducing an evaluator that can interpret all functions that are
@@ -97,10 +105,11 @@ thus the metafunction is correct.
 
 The meta-extract feature allows certain additional hypotheses in the
 statement of the correctness theorem of a metafunction.  These meta-extract
-hypotheses are applications of the pseudo-evaluator to calls of the
-functions \texttt{meta\-/extract\-/contextual\-/fact} and
-   \texttt{meta\-/extract\-/global\-/fact+}.
- These functions produce various
+hypotheses are applications of the pseudo-evaluator to calls of either the
+function \texttt{meta\-/extract\-/global\-/fact+} or its less general
+version \texttt{meta\-/extract\-/global\-/fact}, or the function
+\texttt{meta\-/extract\-/contextual\-/fact}.
+These functions produce various
 sorts of terms by extracting facts from the ACL2 world and calling
 ACL2 prover subroutines, constructed so that if ACL2 and its logical
 state are sound, the terms produced should always be true.  For
@@ -111,8 +120,9 @@ example, these functions can produce:
 \item a term equating a call of a function on quoted constants to the
   quoted value of that call;
 \item a term equating some term $a$ to the result of rewriting $a$
-  using \texttt{mfc-rw}; or
-\item a term describing the type of $a$, according to ACL2's type-set
+  using \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MFC-RW}{\underline{\tt mfc-rw}}; or
+\item a term describing the type of $a$, according to ACL2's
+  \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPE-SET}{\underline{type-set}}
   reasoning.
 \end{itemize}
 When we use such facts in our metafunction, meta-extract hypotheses
@@ -135,15 +145,7 @@ terms are equivalent.
 
 In Section~\ref{sec:meta-extract} we provide examples of meta-extract
 hypotheses and summary documentation of their various forms.
-
-\begin{mycomment}
-  \noindent Section~\ref{sec:meta-extract} (file meta-extract.tex) was
-  originally, I think, going to include an informal sketch of
-  correctness, but it doesn't yet, at least (see comment at the end of
-  that section).
-\end{mycomment}
-
-\noindent Section~\ref{sec:user} presents a community book that
+Section~\ref{sec:user} presents a community book that
 provides a convenient way to use the meta-extract facility.  We then
 present applications in Section~\ref{sec:applications} and finally, we
 conclude with Section~\ref{sec:conclusion}.

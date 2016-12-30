@@ -32,7 +32,7 @@ The theorems proved by \texttt{def\-/meta\-/extract} obviate the need for the us
 the specifics of the definitions of
 \texttt{meta\-/extract\-/contextual\-/fact} and
 \texttt{meta\-/extract\-/global\-/fact+} and the proper construction
-of their \texttt{obj} arguments.  They theorems attempt to support
+of their \texttt{obj} arguments.  They attempt to support
 all the forms listed in Section \ref{sec:general}.  For example, this rule shows that
 \texttt{(evl\-/meta\-/extract\-/global\-/facts)} implies that a theorem looked
 up from the world using \texttt{meta\-/extract\-/formula} is correct:
@@ -58,12 +58,16 @@ of \texttt{mfc-rw+} (specifically, when \texttt{nil}, meaning
 \end{verbatim}
 The above rule involves the system function {\tt sublis-var}, which
 substitutes {\tt alist} into {\tt term} but reduces ground calls of
-primitive functions to their values.  In order to reason about
-sublis-var, the pseudo-evaluator should support all of the primitive
-functions that it treats specially.  The community book
+primitive functions\footnote{By ``primitive functions'' we mean
+  built-in functions such as ({\tt binary-+} that do not have defining
+  events --- that is, those found in the ACL2 constant {\tt
+    *primitive-formals-and-guards*}.} to their values.  In order to
+reason about {\tt sublis-var}, the pseudo-evaluator should support all of
+the primitive functions that it treats specially.  The community book
 ``clause-processors/sublis-var-meaning.lisp'' defines a
 pseudo-evaluator {\tt cterm-ev} that supports exactly these functions
-and proves the following theorem that describes how {\tt sublis-var} evaluates:
+and proves the following theorem that describes how {\tt sublis-var}
+evaluates:
 \begin{verbatim}
 (defthm eval-of-sublis-var
   (implies (and (pseudo-termp x)
@@ -83,7 +87,7 @@ theorem about {\tt sublis-var} to allow it to reason about {\tt
   mfc-rw+}.
 
 
-\begin{mycomment}
+\begin{comment}
 Sol, the list above seems to be more or less just
   saying that the theorems provided by def-meta-extract are those
   described in Section~\ref{sec:general} (file meta-extract.tex).
@@ -101,4 +105,13 @@ Sol, the list above seems to be more or less just
   (say) the theorem from the second example using one bad-guy hyp
   instead of three specific hyps but I'm not sure if it would clarify
   much.
-\end{mycomment}
+
+  [Matt] Thanks --- looks good.  Yep, I think it's probably not be
+  worth showing how a bad-guy hypothesis is used, though if you decide
+  you want to do that, I won't object.  More useful might be giving an
+  example of using context-rw.lisp.  The description above made sense
+  on a sort of word-by-word basis, but I feel sort of fuzzy about it,
+  and outlining an example would probably help.  (But don't bother
+  unless you feel like doing that.)
+
+\end{comment}
