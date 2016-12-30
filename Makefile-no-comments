@@ -1,0 +1,10 @@
+all:
+	pdflatex paper-no-comments.tex
+	bibtex paper-no-comments
+	pdflatex paper-no-comments.tex
+	bibtex paper-no-comments
+	pdflatex paper-no-comments.tex
+
+clean:
+	rm -f *~ *.ps *.dvi *.log *.out
+	rm -f *.blg *.bbl *.aux *.idx *.pag

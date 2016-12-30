@@ -1,0 +1,121 @@
+\documentclass[submission,copyright,creativecommons]{eptcs}
+\providecommand{\event}{ACL2 Workshop 2017} % Name of the event you are submitting to
+% \usepackage{breakurl}             % Not needed if you use pdflatex only.
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{fancyvrb}
+% so we can use \-/ for breakable dashes in long names
+\usepackage[shortcuts]{extdash}
+% \usepackage{bigfoot}
+% \usepackage{tikz}
+\usepackage{color}
+\usepackage{framed}
+
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{corollary}{Corollary}
+
+% The first of the following two definitions of the comment
+% environment is adapted from
+% http://tex.stackexchange.com/questions/71371/how-to-change-color-in-an-environment
+% while the second comes from a package.  Choose the first to see
+% comments and the second to hide them.
+
+%%%\newenvironment{comment}
+%%%  {\par\medskip
+%%%   \color{red}%
+%%%   \begin{framed}
+%%%   \ignorespaces}
+%%% {\end{framed}
+%%%  \medskip}
+
+\usepackage{comment}
+
+% Neither of the following worked for me:
+
+%\newenvironment{mycomment}{{\begin{comment}}}{{\end{comment}}}
+
+% \let\mycomment\comment
+% \let\endmycomment\endcomment
+
+\usepackage{listings}
+\lstset{ %
+  basicstyle=\normalsize\ttfamily,
+  language=lisp,
+  columns=fullflexible,
+  escapeinside={\<}{\>},
+}
+
+\newcommand*{\var}[1]{\mathit{#1}}
+
+\title{Meta-extract}
+\author{Matt Kaufmann
+\institute{Department of Computer Science\\
+The University of Texas at Austin\\
+Austin, TX, USA}
+\email{kaufmann@cs.utexas.edu}
+\and
+Sol O. Swords
+\institute{Centaur Techology, Inc.\\
+Austin, TX, USA}
+\email{sswords@centtech.com}
+}
+\def\titlerunning{Meta-extract}
+\def\authorrunning{M. Kaufmann \& S. Swords}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+
+  ACL2 has long supported user-defined simplifiers, so-called {\em
+    metafunctions} and {\em clause processors}, which are installed
+  when corresponding rules of class {\tt :meta} or {\tt
+    :clause-processor} are proved correct.  Historically, such
+  simplifiers could access the logical world at execution time and
+  could call certain built-in proof tools, but could not assume the
+  soundness of the proof tools or the truth of any facts extracted
+  from the world or context when proving a simplifier correct.  Starting with
+  ACL2 Version 6.0, released in December 2012, an additional
+  capability was added which allows the correctness proofs of
+  simplifiers to assume the correctness of some such proof tools and
+  extracted facts.  In this paper we explain this capability and give
+  examples that demonstrate its utility.
+
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+\input{intro}
+
+\section{Meta-extract}
+\label{sec:meta-extract}
+\input{meta-extract}
+
+\section{Using ``meta-extract-user.lisp''}
+\label{sec:user}
+\input{wrapper}
+
+\section{Applications}
+\label{sec:applications}
+\input{applications}
+
+% No related work section; see top of related.tex
+% \section{Related Work}
+% \label{sec:related}
+% \input{related}
+
+\section{Conclusion}
+\label{sec:conclusion}
+\input{conclusion}
+
+\section*{Acknowledgments}
+
+% Matt had some chats with J about this stuff back in 2012.
+We thank J Moore for helpful discussions.
+Preparation of this paper was partially supported by DARPA under
+Contract No. FA8750-15-C-0007 (subcontract 15-C-0007-UT-Austin).
+
+% \nocite{*}
+\bibliographystyle{eptcs}
+\bibliography{paper}
+\end{document}
+
+
