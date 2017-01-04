@@ -35,60 +35,51 @@
   meta-extract works, Section~\ref{sec:user} shows your
   bad-guy-based tools, and this section shows wide applicability,
   sometimes providing important capabilities.
+
+  [Sol] What I said wasn't clear, but I think I meant that we don't
+  need examples that just show how to use meta-extract, tutorial-like,
+  but rather examples that show how useful it is.  So I'm going to
+  demote the just-expand utility to Others and spend a little more
+  time on GL.
 \end{comment}
 
-\subsection{Just-expand Utility}
+\subsection{GL Symbolic Interpreter}
 
-The community book ``clause-processors/just-expand.lisp'' provides a
-very simple illustration of the usage of meta-extract.  It uses
-meta-extract only to look up a formula for a function so that it can
-expand that definition.  The core functionality is in the function
-\texttt{expand-this-term}.  That function looks up the rule, or the
-definition of the leading function symbol if an explicit rule is not
-given, using \texttt{meta-extract-formula}.  It then essentially
-applies that rule as an unconditional rewrite.  First it ensures that
-its body is of the form
-\begin{lstlisting}
- (equal <$\mathit{lhs}$> <$\mathit{rhs}$>).
-\end{lstlisting}
-If so, it tries to unify the input term with $\mathit{lhs}$, obtaining
-a unifying substitution $\sigma$ if successful, and returns the
-substitution of $\sigma$ into $\mathit{rhs}$.  This procedure is proven
-correct under a meta-extract hypothesis, which is used to reason that
-the formula obtained by looking up the rule is a theorem.
+The
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_GL}{\underline{GL}}
+framework for bit-level symbolic execution~\cite{gl-diss,
+  bit-blasting-GL} is an important tool for hardware verification
+efforts at Centaur Technology \cite{centaur-framework}.  To prove a
+theorem, GL attempts to symbolically interpret the conclusion and
+render it into a Boolean formula which can be proved via a
+satisfiability check.  Given a bit-level representation of each
+variable, the symbolic interpreter recursively computes a bit-level representation
+of each subterm.  It expands function definitions as needed, down to
+certain primitive functions for which support is built in.  Recent
+versions can also apply rewrite rules.  It is implemented as a clause
+processor and uses meta-extract to look up function definitions and
+rewrite rules from the world and to evaluate ground terms using
+\texttt{magic-ev-fncall}.
 
-\texttt{Expand-this-term} is used to define two clause processors and
-a meta rule, each of which is proven correct using meta-extract
-hypotheses.  The first clause processor, \texttt{just-expand-cp},
-applies \texttt{expand-this-term} to all subterms of the goal clause
-that match some user-provided patterns.  The second clause processor,
-\texttt{expand-marked-cp}, looks for calls of an identity function
-\texttt{expand-me} and expands the term contained immediately inside
-each such call, removing the \texttt{expand-me} call itself.  The meta
-rule, \texttt{expand-marked-meta}, triggers on \texttt{expand-me} and
-similarly expands the contained terms.
+GL was originally written before meta-extract, and used two tricks to
+replace its functionality.  The complexity of these tricks reflects
+the utility of meta-extract, since it allows GL to now avoid these
+desperate measures.
+\begin{itemize}
+\item In order to justify the correctness of function definitions, GL
+  would keep track of all definitions that were used, and return each
+  definitional equation as an additional proof obligation from the
+  clause processor.  GL proof hints were orchestrated so as to use
+  \texttt{:by} hints to attempt to cheaply discharge these
+  obligations.  GL did not yet use rewrite rules, but they could have
+  been handled similarly.
+\item In order to apply functions to concrete arguments, each GL
+  clause processor had an apply function that could call a fixed set
+  of functions by name using a \texttt{case} statement.  GL provided
+  automation for defining new such clause processors so that users
+  could build in their own set of functions.
+\end{itemize}
 
-\begin{comment}
-  Sol, it would be interesting to know why, for the two
-  clause-processors above, you used meta-extract rather than just
-  making computed hints (or override hints) that :expand suitable
-  terms.  I {\em do} see why computed hints wouldn't suffice if you
-  were talking about metafunctions instead of clause-processors, since
-  terms to be expanded can arise during rewriting.
-
-  [Sol] One place it's used is in a hint that inducts and then
-  immediately expands the calls of the given function in the induction
-  conclusion but not the induction hyps.  I'm not sure how deep we
-  need to go with motivation for each of these so I'm not sure if I
-  should say anything about it in the paper.
-
-  [Matt] Hmmm, but your description doesn't make it clear to me where
-  the expand-me calls come from when using expand-marked-meta to
-  expand certain terms produced by induction.  I agree with your
-  general uncertainty about the value of saying much about
-  expand-marked-meta, but as a reader I'd like to get just a quick
-  sense of the flow that results in its application.
-\end{comment}
 
 \subsection{Rewrite-bounds}
 
@@ -100,7 +91,7 @@ increases, so if we wish to prove $c<a-b$ and we know $B \geq b$, then
 it suffices to prove $c<a-B$.  While this example would be easily
 handled by ACL2's linear arithmetic solver, there are problems that
 the bound rewriter can handle easily that overwhelm ACL2's nonlinear
-solver -- e.g.,
+solver and cannot be solved with linear arithmetic -- e.g.,
 \begin{verbatim}
 (implies (and (rationalp a) (rationalp b) (rationalp c)
               (<= 0 a) (<= 0 b) (<= 1 c)
@@ -108,13 +99,15 @@ solver -- e.g.,
          (<= (+ (* a b c) (* a b) (* b c) (* a c))
              (+ (* 10 20 30) (* 10 20) (* 20 30) (* 10 30))))
 \end{verbatim}
-On this formula, a \texttt{:nonlinearp t} hint causes ACL2 to hang indefinitely, while the hint
+This formula can't be solved with linear arithmetic, and a
+\texttt{:nonlinearp t} hint causes ACL2 to hang indefinitely, while
+the hint
 \begin{verbatim}
 (rewrite-bounds ((<= a 10)
                  (<= b 20)
                  (<= c 30)))
 \end{verbatim}
-solves it instantaneously, by replacing upper-boundable occurrences of
+solves it instantaneously by replacing upper-boundable occurrences of
 \texttt{a} by 10, \texttt{b} by 20, and \texttt{c} by 30.  The same
 results are obtained --- a quick proof using {\tt rewrite-bounds} but
 an indefinite hang using nonlinear arithmetic --- if the arithmetic
@@ -134,52 +127,71 @@ proposed bound of a subterm is (contextually) true, it uses
 correctness of these uses of ACL2 reasoning utilities are justified by
 meta-extract-contextual-fact hypotheses.
 
-\subsection{Others}
-
-Several other clause processors in the community books use
-meta-extract solely to be able to extract a formula from the world
-(using \texttt{meta-extract-formula}) and assume it to be true.  For
-example, ``clause-processors/witness-cp.lisp'' provides a framework
-for reasoning about quantification (see
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_WITNESS-CP}{\underline{witness-cp}}); it uses
-\texttt{meta-extract-formula} to look up a stored fact showing that a
-term representing a universal quantification implies any instance
-of the quantified formula.  Another book,
-``clause-processors/replace-equalities.lisp'' provides a tool for
-replacing known equalities in ways that aren't accessible to the
-rewriter, e.g., replacing a variable with a term.  For example, the
-following is not a valid rewrite rule because its left-hand side is a variable,
-but it could be a good replace-equalities rule:
-\begin{verbatim}
- (implies (unify-ok pattern term alist)
-          (equal term
-                 (subsitute pattern (unify-subst pattern term alist))))
-\end{verbatim}
-
-\begin{comment}
-Above, ``subsitute'' looks like a typo.  Probably you meant
-``substitute'', but probably, you really meant
-``substitute-into-term''.  When I read this I thought it said
-``substitute'', and I thought it was weird to use a generic sort of
-list utility to create a term.  So I looked at
-clause-processors/replace-equalities.lisp and found
-substitute-into-term.  Maybe the reader could do that too, but I very
-slightly prefer just using substitute-into-term.  You get to decide --
-but of course something needs to be done about the typo,
-``subsitute''.
-\end{comment}
+\subsection{Context-rw}
 
 A meta rule for context-sensitive rewriting, accomplishing something
 similar to Greve's ``Nary'' framework \cite{greve06}, is defined in
 ``centaur/misc/context-rw.lisp'' (see
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{contextual-rewriting}}).
-It uses meta-extract to allow it to
-trust \texttt{mfc-relieve-hyp}, \texttt{mfc-rw+}, and
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_MAGIC-EV-FNCALL}{\underline{\tt magic-ev-fncall}}.
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{contextual-rewriting}}).  An example of its use is to allow, e.g.,
+\begin{verbatim}
+(logbitp 4 (logand (logior a b c (logapp 6 d e)) f g))
+\end{verbatim}
+\noindent to be simplified to
+\begin{verbatim}
+(logbitp 4 (logand (logior a b c d) f g))
+\end{verbatim}
+without defining a rewrite rule specifically for that case. The
+context rewriter uses certain theorems to justify rewriting subterms
+under new contexts, that is, with new calls wrapped around them.  In
+this case the context \texttt{(logbitp 4 ...)} can be propagated
+through the \texttt{logand} and \texttt{logior} down to the
+\texttt{logapp} call, which simplifies under that context to just
+\texttt{d}.  The following is an example of a rule that allows this
+sort of context propagation:
+\begin{verbatim}
+(implies (syntaxp (quotep n))
+         (equal (logbitp n (logand (logbitp n a) b))
+                (logbitp n (logand a b))))
+\end{verbatim}
 
-The
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_GL}{\underline{GL}}
-framework for bit-level symbolic execution~\cite{gl-diss,
-  bit-blasting-GL} uses meta-extract to look up function definitions
-and rewrite rules from the world and to evaluate ground terms using
-\texttt{magic-ev-fncall}.
+The context rewriter uses meta-extract in order to trust rewrite rules
+extracted from the world and results from \texttt{mfc-rw+} and
+\texttt{mfc-relieve-hyp}, which it uses, respectively, to simplify
+subterms under new contexts and to discharge hypotheses necessary for
+applying the context rules.
+
+
+\subsection{Others}
+
+A few other utilities from the community books use
+meta-extract solely to be able to extract a formula from the world
+(using \texttt{meta-extract-formula}) and assume it to be true.  For
+example, ``clause-processors/witness-cp.lisp'' provides a framework
+for reasoning about quantification (see
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_WITNESS-CP}{\underline{witness-cp}});
+it uses \texttt{meta-extract-formula} to look up a stored fact showing
+that a term representing a universal quantification implies any
+instance of the quantified formula.  A second,
+``clause-processors/just-expand.lisp'', provides a clause processor
+and meta rule that force expansion of certain terms, somewhat similar
+to the \texttt{:expand} hint.  A third,
+``clause-processors/replace-equalities.lisp'', provides a tool for
+replacing known equalities in ways that the
+rewriter can't, e.g., replacing a variable with a term.  For example, the
+following is not a valid rewrite rule because its left-hand side is a
+variable, but it could be a good replace-equalities rule:
+\begin{verbatim}
+ (implies (matches pattern x)
+          (equal x
+                 (patternsubst pattern (sigma pattern x))))
+\end{verbatim}
+
+\begin{comment}
+[Matt] Above, ``subsitute'' looks like a typo.
+
+[Sol] Yes, I appear to have misspelled it in a few places.  I mostly
+meant the form above to be evocative rather than an actual example of
+anything; I've changed it for now to use fewer functions that exist,
+but if you prefer we could make it a real example that exists in the
+books somewhere.
+\end{comment}

@@ -92,7 +92,7 @@ following theorem provable by ACL2.
 \end{verbatim}
 
 \noindent At a high level, this theorem shows us that {\tt
-  meta-extract-contextual-fact} is computing a term {\tt
+  meta-extract-contextual-fact} returns a term {\tt
   (\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPESPEC-CHECK}{\underline{typespec-check}} (quote $ts$) x)}, which asserts that the term {\tt
   x} belongs to the set of values represented by $ts$.  The
 meta-extract hypothesis applies the pseudo-evaluator to this term, and
@@ -477,8 +477,6 @@ and {\tt mfc-ap}.
   \item the constraint of $f$ if it is a constrained function
   \item the defchoose axiom of $f$ if it is a \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFCHOOSE}{\underline{\tt defchoose}} function.
   \end{itemize}
-  This straightforwardly allows {\tt meta-extract-formula} to be
-  assumed correct in metafunctions.
 
 \item {\tt (:lemma $f$ $n$)} produces a term corresponding to the
   $n$th rewrite rule stored in the {\tt lemmas} property of function
@@ -514,7 +512,7 @@ The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as fol
     the result of {\tt (mfc-ts $\var{term}$ mfc state :forcep nil :ttreep nil)} and
     {\tt (typespec-check ts val)} is true when {\tt val}'s actual type is in the type-set {\tt ts}.
 
-  \item {(:rw+ $\var{term}\ \var{alist}\ \var{obj}\ \var{equiv}$)}
+  \item {\tt (:rw+ $\var{term}\ \var{alist}\ \var{obj}\ \var{equiv}$)}
     produces a term stating that {\tt mfc-rw+} correctly rewrites
     $\var{term}$ under substitution $\var{alist}$ with objective
     $\var{obj}$ under equivalence relation $\var{equiv}$.  The form of the term produced is
@@ -527,7 +525,7 @@ The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as fol
   (Actually, the $\var{equiv}$ argument may also be {\tt T} meaning
   {\tt IFF} or {\tt NIL} meaning {\tt EQUAL}.)
 
-\item {(:rw $\var{term}\ \var{obj}\ \var{equiv}$)} is similar to the
+\item {\tt (:rw $\var{term}\ \var{obj}\ \var{equiv}$)} is similar to the
   {\tt :rw+} form above, but instead of {\tt mfc-rw+} it supports {\tt
     mfc-rw}, which takes no $\var{alist}$ argument.  Instead, {\tt
     NIL} is used for the substitution.
