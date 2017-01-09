@@ -154,12 +154,28 @@ sort of context propagation:
                 (logbitp n (logand a b))))
 \end{verbatim}
 
+\begin{comment}
+[From Matt] I'm not sure if I'm following what's above.  At first it
+seemed to me that the displayed rule is intended to explain how
+contexts are propagated in the logbitp example above.  Now I think
+(but I'm not sure) that it's just an analogous sort of rule, but we'd
+need for example to propagate into logior expressions to do that
+logbitp example.  Can you clarify a bit?
+\end{comment}
+
 The context rewriter uses meta-extract in order to trust rewrite rules
 extracted from the world and results from \texttt{mfc-rw+} and
 \texttt{mfc-relieve-hyp}, which it uses, respectively, to simplify
 subterms under new contexts and to discharge hypotheses necessary for
 applying the context rules.
 
+\begin{comment}
+[From Matt] I haven't given the following any thought at all, but I
+wonder if patterned congruences could provide an alternate solution.
+Maybe that doesn't matter, but if offhand you (Sol) think so, you
+could add such words and reference the ITP 2014 paper on patterned
+congruences (I'll send you a reference if you ask).
+\end{comment}
 
 \subsection{Others}
 
