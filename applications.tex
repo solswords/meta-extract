@@ -8,40 +8,40 @@
 % consistency let's use them in this file, too.  (But we could use
 % lower-case in both; fine with me either way.)
 
-\begin{comment}
-  I was thinking of this as some examples readers could look at to
-  show how meta-extract is used in practice, but now that we have the
-  examples from the previous section maybe that shouldn't be the
-  focus.  Instead, maybe we really want to say what the most important
-  uses of it so far have been, and just show that it really is useful
-  in building sophisticated tools.  So, de-emphasize the just-expand
-  utility and spend a bit more time on GL?
+% \begin{comment}
+%   I was thinking of this as some examples readers could look at to
+%   show how meta-extract is used in practice, but now that we have the
+%   examples from the previous section maybe that shouldn't be the
+%   focus.  Instead, maybe we really want to say what the most important
+%   uses of it so far have been, and just show that it really is useful
+%   in building sophisticated tools.  So, de-emphasize the just-expand
+%   utility and spend a bit more time on GL?
 
-  [Matt, replacing what I wrote in my 12/28 email] I'm probably not
-  understanding your point, since to me, ``how meta-extract is used in
-  practice'' and ``most important uses of it so far'' are almost the
-  same.  Maybe your point was that it's better to focus on the most
-  {\em important} uses than it is to focus on the practicality of a
-  wide {\em range} of uses.  If so, I guess I sort of agree if I had
-  to choose; but I think both are really good.  And really, the
-  section already fleshes out the range of uses while mentioning some
-  important ones, notably GL.  Anyhow, I'll probably be happy with
-  whatever you'd like to do here.  In particular, if you care to
-  provide a bit more detail about how meta-extract supports GL, that
-  would be fine; but I can live with what we already have, too.  Oh,
-  and it looks like you might be concerned about overlap between this
-  section and the previous two sections, but I think each section
-  makes its own contribution: Section~\ref{sec:meta-extract} shows how
-  meta-extract works, Section~\ref{sec:user} shows your
-  bad-guy-based tools, and this section shows wide applicability,
-  sometimes providing important capabilities.
+%   [Matt, replacing what I wrote in my 12/28 email] I'm probably not
+%   understanding your point, since to me, ``how meta-extract is used in
+%   practice'' and ``most important uses of it so far'' are almost the
+%   same.  Maybe your point was that it's better to focus on the most
+%   {\em important} uses than it is to focus on the practicality of a
+%   wide {\em range} of uses.  If so, I guess I sort of agree if I had
+%   to choose; but I think both are really good.  And really, the
+%   section already fleshes out the range of uses while mentioning some
+%   important ones, notably GL.  Anyhow, I'll probably be happy with
+%   whatever you'd like to do here.  In particular, if you care to
+%   provide a bit more detail about how meta-extract supports GL, that
+%   would be fine; but I can live with what we already have, too.  Oh,
+%   and it looks like you might be concerned about overlap between this
+%   section and the previous two sections, but I think each section
+%   makes its own contribution: Section~\ref{sec:meta-extract} shows how
+%   meta-extract works, Section~\ref{sec:user} shows your
+%   bad-guy-based tools, and this section shows wide applicability,
+%   sometimes providing important capabilities.
 
-  [Sol] What I said wasn't clear, but I think I meant that we don't
-  need examples that just show how to use meta-extract, tutorial-like,
-  but rather examples that show how useful it is.  So I'm going to
-  demote the just-expand utility to Others and spend a little more
-  time on GL.
-\end{comment}
+%   [Sol] What I said wasn't clear, but I think I meant that we don't
+%   need examples that just show how to use meta-extract, tutorial-like,
+%   but rather examples that show how useful it is.  So I'm going to
+%   demote the just-expand utility to Others and spend a little more
+%   time on GL.
+% \end{comment}
 
 \subsection{GL Symbolic Interpreter}
 
@@ -132,7 +132,10 @@ meta-extract-contextual-fact hypotheses.
 A meta rule for context-sensitive rewriting, accomplishing something
 similar to Greve's ``Nary'' framework \cite{greve06}, is defined in
 ``centaur/misc/context-rw.lisp'' (see
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{contextual-rewriting}}).  An example of its use is to allow, e.g.,
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_CONTEXTUAL-REWRITING}{\underline{contextual-rewriting}}).
+Like Nary, it supports an analogue of congruence reasoning using
+contexts that are more general than equivalence relations.  An example
+of its use is to allow, e.g.,
 \begin{verbatim}
 (logbitp 4 (logand (logior a b c (logapp 6 d e)) f g))
 \end{verbatim}
@@ -143,16 +146,47 @@ similar to Greve's ``Nary'' framework \cite{greve06}, is defined in
 without defining a rewrite rule specifically for that case. The
 context rewriter uses certain theorems to justify rewriting subterms
 under new contexts, that is, with new calls wrapped around them.  In
-this case the context \texttt{(logbitp 4 ...)} can be propagated
-through the \texttt{logand} and \texttt{logior} down to the
+this case we might have a rule that says that \texttt{(logbitp 4 ...)}
+induces a \texttt{(logand 16 ...)} context; this context can then be
+propagated through the \texttt{logand} and \texttt{logior} down to the
 \texttt{logapp} call, which simplifies under that context to just
-\texttt{d}.  The following is an example of a rule that allows this
-sort of context propagation:
+\texttt{d}, using a traditional rewrite rule such as the following:
+\begin{verbatim}
+(implies (and (syntaxp (and (quotep n) (quotep m)))
+              (equal (logtail m n) 0))
+         (equal (logand n (logapp m a b))
+                (logand n a)))
+\end{verbatim}
+\noindent When interpreted as a context rule, the following says that
+\texttt{logbitp} induces a \texttt{logand} context:
 \begin{verbatim}
 (implies (syntaxp (quotep n))
-         (equal (logbitp n (logand (logbitp n a) b))
-                (logbitp n (logand a b))))
+         (equal (logbitp n (logand (ash 1 (nfix n)) m))
+                (logbitp n m)))
 \end{verbatim}
+\noindent And the following rule says that \texttt{logior} propagates such a
+\texttt{logand} context onto its second argument:
+\begin{verbatim}
+(implies (syntaxp (quotep n))
+         (equal (logand n (logior a (loghead n b)))
+                (logand n (logior a b))))
+\end{verbatim}
+\noindent A syntactic requirement for context rules is that the left-
+and right-hand sides must be identical except that some subterm of the
+LHS is replaced by a variable in the RHS (in this case \texttt{b}),
+and that is the only occurrence of that variable in the RHS.  That
+variable corresponds to the subterm onto which the context will be
+propagated, and the corresponding subterm of the LHS reflects the
+context that will be propagated onto it.  So rule above says:
+\begin{quote}
+When \texttt{logior} occurs under a \texttt{(logand n ...)} context where
+\texttt{n} is a constant, propagate \texttt{(logand n ...)} context
+onto the first argument of the \texttt{logand}.
+\end{quote}
+\noindent Experienced ACL2 users might note that the roles of the
+left- and right-hand sides are essentially reversed in this usage;
+this is because often the reverse of a good context-propagation rule
+is also a good rewrite rule.
 
 \begin{comment}
 [From Matt] I'm not sure if I'm following what's above.  At first it
@@ -161,6 +195,11 @@ contexts are propagated in the logbitp example above.  Now I think
 (but I'm not sure) that it's just an analogous sort of rule, but we'd
 need for example to propagate into logior expressions to do that
 logbitp example.  Can you clarify a bit?
+
+[Sol] Fixed this up a bit, hopefully makes more sense now.  The
+original logbitp example was totally bogus so thanks for catching
+that.  The new example is actually correct (slight change to
+logand-pass-loghead-context-1 in centaur/bitops/congruences.lisp).
 \end{comment}
 
 The context rewriter uses meta-extract in order to trust rewrite rules
@@ -175,6 +214,11 @@ wonder if patterned congruences could provide an alternate solution.
 Maybe that doesn't matter, but if offhand you (Sol) think so, you
 could add such words and reference the ITP 2014 paper on patterned
 congruences (I'll send you a reference if you ask).
+
+[Sol] Patterned congruences are still only capable of propagating
+contexts that have defined equivalence relations, whereas this and
+Nary support something like ``parameterized equivalences'' (really via
+parameterized fixing functions such as, e.g., loghead).
 \end{comment}
 
 \subsection{Others}
@@ -202,12 +246,12 @@ variable, but it could be a good replace-equalities rule:
                  (patternsubst pattern (sigma pattern x))))
 \end{verbatim}
 
-\begin{comment}
-[Matt] Above, ``subsitute'' looks like a typo.
+% \begin{comment}
+% [Matt] Above, ``subsitute'' looks like a typo.
 
-[Sol] Yes, I appear to have misspelled it in a few places.  I mostly
-meant the form above to be evocative rather than an actual example of
-anything; I've changed it for now to use fewer functions that exist,
-but if you prefer we could make it a real example that exists in the
-books somewhere.
-\end{comment}
+% [Sol] Yes, I appear to have misspelled it in a few places.  I mostly
+% meant the form above to be evocative rather than an actual example of
+% anything; I've changed it for now to use fewer functions that exist,
+% but if you prefer we could make it a real example that exists in the
+% books somewhere.
+% \end{comment}

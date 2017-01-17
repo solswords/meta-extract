@@ -1,43 +1,43 @@
-\begin{comment}
-[Old comment] One or both of us will write this.  Maybe we'll wait
-  till a draft of the rest is written, so that we can hit the high
-  points here.  Any ideas about future work?  Any lessons learned?
-  (It would be cool if some application would likely have been much
-  more difficult to carry out without this.)
+% \begin{comment}
+% [Old comment] One or both of us will write this.  Maybe we'll wait
+%   till a draft of the rest is written, so that we can hit the high
+%   points here.  Any ideas about future work?  Any lessons learned?
+%   (It would be cool if some application would likely have been much
+%   more difficult to carry out without this.)
 
-[Matt] As far as I'm concerned we can delete this comment, but I'm
-leaving it here for now in case Sol thinks we need to do more to
-address some of what's in the paragraph above.
-\end{comment}
+% [Matt] As far as I'm concerned we can delete this comment, but I'm
+% leaving it here for now in case Sol thinks we need to do more to
+% address some of what's in the paragraph above.
+% \end{comment}
 
-\begin{comment}
-Is there a grep command we can run in books showing/ that we use
-    meta-extract?  I tried
+% \begin{comment}
+% Is there a grep command we can run in books showing/ that we use
+%     meta-extract?  I tried
 
-\begin{verbatim}
-time fgrep --include='*.lisp' -ri meta-extract . | fgrep -v system/doc/acl2-doc.lisp
-\end{verbatim}
+% \begin{verbatim}
+% time fgrep --include='*.lisp' -ri meta-extract . | fgrep -v system/doc/acl2-doc.lisp
+% \end{verbatim}
 
-\noindent but it includes things like {\tt
-boundrw-ev-meta-extract-contextual-facts} and {\tt
-ctx-ev-meta-extract-contextual-facts}, which I don't understand.
+% \noindent but it includes things like {\tt
+% boundrw-ev-meta-extract-contextual-facts} and {\tt
+% ctx-ev-meta-extract-contextual-facts}, which I don't understand.
 
-[Sol] These are macros for the universally-quantified hyps produced by
-{\tt def-meta-extract}.  I think that's a good way to look for the
-books that define metafunctions/clause-processors using meta-extract;
-I did something like that to find examples for Section
-\ref{sec:applications}.
+% [Sol] These are macros for the universally-quantified hyps produced by
+% {\tt def-meta-extract}.  I think that's a good way to look for the
+% books that define metafunctions/clause-processors using meta-extract;
+% I did something like that to find examples for Section
+% \ref{sec:applications}.
 
-[Matt] Thanks.  Perhaps you'd be willing to run that command and,
-based on your understanding of the output, add a few words about how
-the numbers from the output show that meta-extract is being used.  But
-feel free not to bother, of course.
+% [Matt] Thanks.  Perhaps you'd be willing to run that command and,
+% based on your understanding of the output, add a few words about how
+% the numbers from the output show that meta-extract is being used.  But
+% feel free not to bother, of course.
 
-Below is an initial stab at the conclusion by Matt, which undoubtedly
-could be improved.  Maybe you can say a bit more, at a high level,
-    about meta-extract at Centaur (even if only referring back to the
-    applications section).
-\end{comment}
+% Below is an initial stab at the conclusion by Matt, which undoubtedly
+% could be improved.  Maybe you can say a bit more, at a high level,
+%     about meta-extract at Centaur (even if only referring back to the
+%     applications section).
+% \end{comment}
 
 This paper explains meta-extract hypotheses and shows how they can be
 put to good use, either directly or by way of the {\tt
@@ -45,7 +45,7 @@ put to good use, either directly or by way of the {\tt
 % I (Matt) deleted "described in Section~\ref{sec:user}", which were
 % probably words that I had put there, because it seemed to give undue
 % emphasis to that section.
-This
+The meta-extract
 facility has been successfully used to create specialized proof tools
 that are admitted by ACL2 as fully verified metafunctions or
 clause-processors, including the GL bit-blasting framework, which is
