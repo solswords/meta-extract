@@ -168,7 +168,7 @@ propagated through the \texttt{logand} and \texttt{logior} down to the
 \texttt{logand} context onto its second argument:
 \begin{verbatim}
 (implies (syntaxp (quotep n))
-         (equal (logand n (logior a (loghead n b)))
+         (equal (logand n (logior a (logand n b)))
                 (logand n (logior a b))))
 \end{verbatim}
 \noindent A syntactic requirement for context rules is that the left-
@@ -198,8 +198,8 @@ logbitp example.  Can you clarify a bit?
 
 [Sol] Fixed this up a bit, hopefully makes more sense now.  The
 original logbitp example was totally bogus so thanks for catching
-that.  The new example is actually correct (slight change to
-logand-pass-loghead-context-1 in centaur/bitops/congruences.lisp).
+that.  The new example is actually correct (added
+context-rw-example.lisp to make sure).
 \end{comment}
 
 The context rewriter uses meta-extract in order to trust rewrite rules
@@ -218,7 +218,8 @@ congruences (I'll send you a reference if you ask).
 [Sol] Patterned congruences are still only capable of propagating
 contexts that have defined equivalence relations, whereas this and
 Nary support something like ``parameterized equivalences'' (really via
-parameterized fixing functions such as, e.g., loghead).
+parameterized fixing functions such as, e.g., loghead or in this case
+logand).
 \end{comment}
 
 \subsection{Others}
