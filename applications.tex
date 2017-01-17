@@ -157,8 +157,13 @@ propagated through the \texttt{logand} and \texttt{logior} down to the
          (equal (logand n (logapp m a b))
                 (logand n a)))
 \end{verbatim}
+% Sol: I added explanation here, even though you explain "roles
+% ... reversed" later, since otherwise I think the rule is kind of
+% confusing to read.  But if you want to delete my change, that's fine.
 \noindent When interpreted as a context rule, the following says that
-\texttt{logbitp} induces a \texttt{logand} context:
+\texttt{logbitp} induces a \texttt{logand} context, by directing
+replacement of an instance of the right-hand side of the equality by
+the corresponding instance of the left-hand side.
 \begin{verbatim}
 (implies (syntaxp (quotep n))
          (equal (logbitp n (logand (ash 1 (nfix n)) m))
@@ -177,50 +182,22 @@ LHS is replaced by a variable in the RHS (in this case \texttt{b}),
 and that is the only occurrence of that variable in the RHS.  That
 variable corresponds to the subterm onto which the context will be
 propagated, and the corresponding subterm of the LHS reflects the
-context that will be propagated onto it.  So rule above says:
+context that will be propagated onto it.  So the rule immediately above says:
 \begin{quote}
 When \texttt{logior} occurs under a \texttt{(logand n ...)} context where
-\texttt{n} is a constant, propagate \texttt{(logand n ...)} context
-onto the first argument of the \texttt{logand}.
+\texttt{n} is a constant, propagate the \texttt{(logand n ...)} context
+onto the second argument of the \texttt{logior}.
 \end{quote}
 \noindent Experienced ACL2 users might note that the roles of the
 left- and right-hand sides are essentially reversed in this usage;
 this is because often the reverse of a good context-propagation rule
 is also a good rewrite rule.
 
-\begin{comment}
-[From Matt] I'm not sure if I'm following what's above.  At first it
-seemed to me that the displayed rule is intended to explain how
-contexts are propagated in the logbitp example above.  Now I think
-(but I'm not sure) that it's just an analogous sort of rule, but we'd
-need for example to propagate into logior expressions to do that
-logbitp example.  Can you clarify a bit?
-
-[Sol] Fixed this up a bit, hopefully makes more sense now.  The
-original logbitp example was totally bogus so thanks for catching
-that.  The new example is actually correct (added
-context-rw-example.lisp to make sure).
-\end{comment}
-
 The context rewriter uses meta-extract in order to trust rewrite rules
 extracted from the world and results from \texttt{mfc-rw+} and
 \texttt{mfc-relieve-hyp}, which it uses, respectively, to simplify
 subterms under new contexts and to discharge hypotheses necessary for
 applying the context rules.
-
-\begin{comment}
-[From Matt] I haven't given the following any thought at all, but I
-wonder if patterned congruences could provide an alternate solution.
-Maybe that doesn't matter, but if offhand you (Sol) think so, you
-could add such words and reference the ITP 2014 paper on patterned
-congruences (I'll send you a reference if you ask).
-
-[Sol] Patterned congruences are still only capable of propagating
-contexts that have defined equivalence relations, whereas this and
-Nary support something like ``parameterized equivalences'' (really via
-parameterized fixing functions such as, e.g., loghead or in this case
-logand).
-\end{comment}
 
 \subsection{Others}
 
