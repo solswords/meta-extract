@@ -6,8 +6,10 @@ summarizing the general forms of meta-extract hypotheses.
 We present two examples for the two kinds of meta-extract hypotheses,
 corresponding to evaluation of calls of {\tt
   meta-extract-contextual-fact} and of {\tt meta-extract-global-fact}.
-(Since a call {\tt (meta-extract-global-fact obj state)} abbreviates
-the call {\tt (meta-extract-global-fact+ obj state state)}, we are
+(Since a call {\tt (meta-extract-global-fact obj state)} is an
+abbreviation for
+% I tweaked the wording to fix an "Overfull \hbox" warning.
+{\tt (meta-extract-global-fact+ obj state state)}, we are
 thus effectively illustrating {\tt meta-extract-global-fact+} as
 well.)
 
@@ -585,3 +587,14 @@ The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as fol
 %%%  readers can see why we believe each term produced by the
 %%%  meta-extract-* functions to be true.
 %%%\end{comment}
+
+We have seen there are two forms of meta-extract hypotheses: {\tt
+  meta-extract-contextual-fact} and {\tt meta-extract-global-fact+}
+(and its less general form, {\tt meta-extract-global-fact}).  We could
+have split each of these into several forms, resulting in eight forms
+for the eight kinds of values of {\tt obj} listed above.  However, in
+the next section we describe a utility that essentially generalizes
+the two supported forms, which eliminates the need for the user to
+think about the precise values of {\tt obj}; it was convenient to
+generalize two supported forms rather than eight.
+

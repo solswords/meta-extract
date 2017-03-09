@@ -41,13 +41,16 @@
 
 This paper explains meta-extract hypotheses and shows how they can be
 put to good use, either directly or by way of the {\tt
-  def-meta-extract} utility.
-% I (Matt) deleted "described in Section~\ref{sec:user}", which were
-% probably words that I had put there, because it seemed to give undue
-% emphasis to that section.
-The meta-extract
-facility has been successfully used to create specialized proof tools
-that are admitted by ACL2 as fully verified metafunctions or
-clause-processors, including the GL bit-blasting framework, which is
-in daily use at Centaur Technology.  We hope that this paper
-contributes to wider successful use of the meta-extract feature.
+def-meta-extract} utility to obtain two simple, general meta-extract
+hypotheses.  The implementation and logical justification for
+meta-extract are delicate, so it made sense to implement only the
+primitive notions of Section~\ref{sec:meta-extract} in ACL2 and then
+introduce {\tt def-meta-extract} in a book, with less trusted code as
+a result.
+
+The meta-extract facility has been successfully used to create
+specialized proof tools that are admitted by ACL2 as fully verified
+metafunctions or clause-processors, including the GL bit-blasting
+framework, which is in daily use at Centaur Technology.  We hope that
+this paper contributes to wider successful use of the meta-extract
+feature.
