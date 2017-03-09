@@ -19,14 +19,21 @@ hypotheses where the \texttt{obj} argument is a call of a ``bad-guy'' (Skolem)
 % is one.  I've made my edits under that assumption, but please
 % correct this if I'm wrong!
 function.  This essentially universally quantifies the \texttt{obj}
-argument: informally, the term $obj_0 = $ {\tt (evl-meta-extract-bad-guy a mfc state)} is
-some {\tt obj} for which the formula $\varphi = $ {\tt (evl (meta-extract-contextual-fact obj
-  mfc state) a)} is false, if any such {\tt obj} exists; so by
-asserting that $\varphi$ is true for $obj_0$, we assert $(\forall obj)
-\varphi$.
+argument: informally, the term
+\begin{lstlisting}
+  <$\var{obj}_0 = $> (evl-meta-extract-contextual-bad-guy a mfc state)
+\end{lstlisting}
+is
+some {\tt obj} for which the formula
+\begin{lstlisting}
+  <$\varphi = $> (evl (meta-extract-contextual-fact obj mfc state) a)
+\end{lstlisting}
+is false, if any such {\tt obj} exists; so by
+asserting that $\varphi$ is true for $\var{obj}_0$, we assert $(\forall\ \var{obj})\ 
+\varphi$.  Therefore,
 \begin{verbatim}
   (evl (meta-extract-contextual-fact
-         (evl-meta-extract-bad-guy a mfc state)
+         (evl-meta-extract-contextual-bad-guy a mfc state)
          mfc state)
        a)
 \end{verbatim}
@@ -41,7 +48,7 @@ functional instantiation of similar theorems proved in
 ``meta-extract-user.lisp'' about a base evaluator that only supports
 the six functions {\tt typespec-check}, {\tt if}, {\tt equal}, {\tt
   not}, {\tt iff}, and {\tt implies}; this means that {\tt evl} must
-also support these six functions for the utility to work.
+also support at least these six functions for the utility to work.
 
 
 The theorems proved by \texttt{def\-/meta\-/extract} obviate the need for the user to reason about

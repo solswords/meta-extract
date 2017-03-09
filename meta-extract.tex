@@ -506,6 +506,12 @@ and {\tt mfc-ap}.
   \begin{lstlisting}[basicstyle=\linespread{0.4}\normalsize\ttfamily]
     (implies <$\var{hyps}$> (<$\var{equiv}$> <$\var{lhs}$> <$\var{rhs}$>))<\textrm{.}>
   \end{lstlisting}
+  The rewrite rules stored in {\tt :lemmas} are not simply theorem
+  bodies, which could be accessed using {\tt meta-extract-formula},
+  but rewrite rule structures, which separately store the left-hand
+  side, right-hand side, equivalence relation, and hypotheses, and
+  also contain heuristic information such as the backchain limits and
+  match-free mode.
 
 \item {\tt (:fncall $f$ $L$)} produces a term {\tt (equal $c$ '$v$)}, where
     $c$ is the call that applies $f$ to the quotations of the values in argument list $L$, and $v$ is
