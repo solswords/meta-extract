@@ -36,7 +36,8 @@ this example.
 {\tt (nth n x)} by a corresponding term {\tt (car x)} when {\tt n} is
 known to be a symbol using
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPE-SET}{\underline{type-set}}
-reasoning.
+reasoning.\footnote{For details such as the meaning of {\tt :forcep
+    nil}, see the documentation for \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{meta-extract}}.}
 
 \begin{verbatim}
 (defun nth-symbolp-metafn (term mfc state)
@@ -92,7 +93,8 @@ following theorem provable by ACL2.
 \end{verbatim}
 
 \noindent At a high level, this theorem shows us that {\tt
-  meta-extract-contextual-fact} returns a term {\tt
+% Added words below to fix problem with right margin.
+  meta-extract-contextual-fact} returns a term of the form {\tt
   (\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_TYPESPEC-CHECK}{\underline{typespec-check}} (quote $ts$) x)}, which asserts that the term {\tt
   x} belongs to the set of values represented by $ts$.  The
 meta-extract hypothesis applies the pseudo-evaluator to this term, and
@@ -157,7 +159,11 @@ Therefore, the following test of the example above yields no surprises.
 
 Our second example is from community book
   ``demos/nth-update-nth-meta-extract.lisp'', which uses {\tt
-  meta-extract-global-fact}.  Let us begin by seeing what problem this
+% Reviewer 3 wanted to replace "by seeing" with "by understanding".
+% That's OK, but for some reason I don't like the "sound" of that.  So
+% I've changed it to "by considering", but feel free to change to
+% whatever wording you prefer.
+  meta-extract-global-fact}.  Let us begin by considering what problem this
 book is attempting to solve.
 
 % \begin{comment}
@@ -252,12 +258,12 @@ term returned by the following function.
                                       (meta-extract-formula reader state)))
                  (i-rd (fn-nth-index reader reader-formula)))
             (and
-             i-rd {\em \color{red} ; the body of reader is (nth 'i-rd ...)}
+             i-rd {\em ; the body of reader is (nth 'i-rd ...)}
              (let* ((writer-formula (and (symbolp writer)
                                          (meta-extract-formula writer state)))
                     (i-wr (fn-update-nth-index writer writer-formula)))
                (and
-                i-wr {\em \color{red} ; the body of writer is (update-nth 'i-wr ...)}
+                i-wr {\em ; the body of writer is (update-nth 'i-wr ...)}
                 (if (eql i-rd i-wr)
                     val
                   (list reader x))))))))
@@ -293,7 +299,7 @@ connect to those found by our metafunction.
   (declare (xargs :stobjs state :verify-guards nil))
   (let* ((fn (car term))
          (actuals (cdr term))
-         (formula (meta-extract-formula fn state)) {\em \color{red} ; (equal (fn ...) ...)}
+         (formula (meta-extract-formula fn state)) {\em ; (equal (fn ...) ...)}
          (formals (cdr (cadr formula))))
     (meta-extract-alist-rec formals actuals a)))
 \end{Verbatim}
@@ -307,14 +313,14 @@ connect to those found by our metafunction.
 
 (defthm nth-update-nth-meta-rule-st
   (implies
-   (and (nth-update-nth-ev {\em \color{red} ; (f (update-g val st))}
+   (and (nth-update-nth-ev {\em ; (f (update-g val st))}
          (meta-extract-global-fact (list :formula (car term)) state)
          (meta-extract-alist term a state))
-        (nth-update-nth-ev {\em \color{red} ; (update-g val st)}
+        (nth-update-nth-ev {\em ; (update-g val st)}
          (meta-extract-global-fact (list :formula (car (cadr term)))
                                    state)
          (meta-extract-alist (cadr term) a state))
-        (nth-update-nth-ev {\em \color{red} ; (f st) -- note st is (caddr (cadr term))}
+        (nth-update-nth-ev {\em ; (f st) -- note st is (caddr (cadr term))}
          (meta-extract-global-fact (list :formula (car term)) state)
          (meta-extract-alist (list (car term)
                                    (caddr (cadr term)))
@@ -401,13 +407,13 @@ respectively, for the stobj $s$.
 
 In this section we summarize briefly the forms of meta-extract
 hypotheses.  Additional details may be found in the documentation for
-\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{META-EXTRACT}}.
+\href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{meta-extract}}.
 % These forms correspond to the theorems described at the end of
 % Section~\ref{sec:user}.
 
 Below, let {\tt evl} be the pseudo-evaluator (see
 Section~\ref{sec:intuitive}) used in a meta rule.  The two primary
-forms of meta-extract hypotheses that can be used in that theorem are
+forms of meta-extract hypotheses that can be used in a meta rule are
 as follows.  In the first, {\tt aa} represents an arbitrary term; in
 the second, {\tt a} must be the second argument of the two calls of
 the (pseudo-)evaluator in the conclusion of the theorem.
@@ -478,6 +484,15 @@ and {\tt mfc-ap}.
   \item the defchoose axiom of $f$ if it is a \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_DEFCHOOSE}{\underline{\tt defchoose}} function.
   \end{itemize}
 
+% Reviewer 1 says this about the next item:
+%%% page 8, (:lemma f n): is there a reason why this only applies to rewrite rules,
+%%% and not to other kinds of rules?
+% I think the answer is that :formula (above) already obtains
+% theorems, but sometimes one wants to grab a rewrite rule.  I confess
+% that I don't know why offhand.  Sol, if you have a quick explanation
+% for why :lemma gives us something useful that :formula doesn't
+% easily give us, that might be good to add below.
+
 \item {\tt (:lemma $f$ $n$)} produces a term corresponding to the
   $n$th rewrite rule stored in the {\tt lemmas} property of function
   $f$, which allows any such rule to be assumed correct in a
@@ -522,8 +537,10 @@ The allowed {\tt obj} arguments to {\tt meta-extract-contextual-fact} are as fol
   where $\var{term}'$ is the new term formed by substituting
   $\var{alist}$ into $\var{term}$ and $\var{rw}$ is the result of the call
   {\tt (mfc-rw+ $\var{term}\ \var{alist}\ \var{obj}\ \var{equiv}$ mfc state :forcep nil :ttreep nil)}.
-  (Actually, the $\var{equiv}$ argument may also be {\tt T} meaning
-  {\tt IFF} or {\tt NIL} meaning {\tt EQUAL}.)
+% Modified words below to fix problem with right margin, though I
+% changed it a bit more than just for that.
+  The $\var{equiv}$ argument may also be {\tt T}, meaning
+  {\tt IFF}, or {\tt NIL}, meaning {\tt EQUAL}.
 
 \item {\tt (:rw $\var{term}\ \var{obj}\ \var{equiv}$)} is similar to the
   {\tt :rw+} form above, but instead of {\tt mfc-rw+} it supports {\tt

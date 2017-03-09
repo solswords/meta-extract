@@ -99,9 +99,16 @@ solver and cannot be solved with linear arithmetic -- e.g.,
          (<= (+ (* a b c) (* a b) (* b c) (* a c))
              (+ (* 10 20 30) (* 10 20) (* 20 30) (* 10 30))))
 \end{verbatim}
-This formula can't be solved with linear arithmetic, and a
-\texttt{:nonlinearp t} hint causes ACL2 to hang indefinitely, while
-the hint
+% Reviewer 3 say:
+%%% Some discussion as to *why* "normal" linear or non-linear
+%%% arithmetic in ACL2 can't solve this problem is in order here.
+% I've tried to address that somewhat below, but I don't think it's
+% the job of this paper to debug the nonlinear package.
+This formula can't be solved with linear arithmetic, because it is not a
+linear problem.  (If each product of variables is replaced by a fresh
+variable, the result is clearly not a theorem.)
+Moreover, the hint \texttt{:nonlinearp t} causes ACL2 to hang indefinitely.
+However, the hint
 \begin{verbatim}
 (rewrite-bounds ((<= a 10)
                  (<= b 20)

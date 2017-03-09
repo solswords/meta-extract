@@ -1,3 +1,46 @@
+% General comments and "To Dos":
+
+% I've fixed right margins -- well, the worst offender is line 3 of
+% Section 2.1, but I think that's minor and it seems awkward to fix.
+% I've also done a full spell-check.  If we make further changes we
+% could do those again.
+
+% Reviewer 2 says the following.
+%%% Presumably the ACL2 source code essay on correctness addresses the
+%%% soundness concerns related to meta-extract.  Even so, I think this
+%%% paper should at least address the most basic question: why not
+%%% simply axiomatize the appropriate functional interfaces to ACL2?
+%%% Presumably because that is not sound, but the paper should at
+%%% least explain why and then contrast that with the preferred
+%%% approach.
+% I'm not completely sure that I understand, but I think the point is
+% that instead of something like this: instead of using
+% meta-extract-contextual-fact in our first example, why not have a
+% hypothesis something like this (which is equivalent, as we show)?
+%   (typespec-check
+%    (mfc-ts (cadr term) mfc state :forcep nil)
+%    (nthmeta-ev (cadr term) a))
+% Do you think that's what the reviewer is asking?  If so, do you have
+% an answer?  I'm being lazy here; maybe I could think harder about
+% this, but I suspect you'll know right away.  If not let me know and
+% I'll think some more.  Similarly I'm hoping to punt to you on the
+% other two questions from that reviewer; would you take a look?  Ah,
+% except I might have some answer to the last part starting with "Sol
+% has apparently...": this stuff is tricky to get right, and it seemed
+% more straightforward to implement what we did and then let a book
+% take care of the universal quantification.  Should I write that up,
+% or isn't that quite the right answer?
+
+% Reviewer 3 says that following, but I think we should ignore it.
+%%% Section 1.1 Perhaps the referenced essay in the source code should
+%%% be published -- it seems important.
+
+% I checked references for which DOIs are missing and I didn't find
+% any more.  As far as I'm concerned we're good on the references, and
+% EPTCS can complain if it wants to.
+
+% End of General comments and "To Dos".
+
 \documentclass[submission,copyright,creativecommons]{eptcs}
 \providecommand{\event}{ACL2 Workshop 2017} % Name of the event you are submitting to
 % \usepackage{breakurl}             % Not needed if you use pdflatex only.
@@ -46,6 +89,18 @@
 
 \newcommand*{\var}[1]{\mathit{#1}}
 
+% The following comment is from Reviewer 3:
+%%% The title is short-and-sweet, but perhaps too short.  It would be
+%%% nice if the title conveyed more information to the ACL2-curious
+%%% user of other theorem provers; something like "Using Meta-extract
+%%% to Craft Custom Proof Routines in ACL2" (using language from the
+%%% paper).
+% I don't like the suggested new title, because it might suggest that
+% this paper is about the addition of meta rules.  I was tempted to
+% make the title "Meta-extract: Reflecting What We Know", but that's
+% too obscure.  Maybe: "Meta-extract: Bringing Implicit Knowledge to
+% Bear".  I dunno.  Ideas?
+
 \title{Meta-extract}
 \author{Matt Kaufmann
 \institute{Department of Computer Science\\
@@ -68,7 +123,7 @@ Austin, TX, USA}
   ACL2 has long supported user-defined simplifiers, so-called {\em
     metafunctions} and {\em clause processors}, which are installed
   when corresponding rules of class {\tt :meta} or {\tt
-    :clause-processor} are proved correct.  Historically, such
+    :clause-processor} are proved.  Historically, such
   simplifiers could access the logical world at execution time and
   could call certain built-in proof tools, but could not assume the
   soundness of the proof tools or the truth of any facts extracted
@@ -110,6 +165,7 @@ Austin, TX, USA}
 
 % Matt had some chats with J about this stuff back in 2012.
 We thank J Moore for helpful discussions.
+We also thank the referees for useful feedback.
 This material is based upon work supported in part by DARPA under
 Contract No. FA8750-15-C-0007 (subcontract 15-C-0007-UT-Austin)
 and by ForrestHunt, Inc.

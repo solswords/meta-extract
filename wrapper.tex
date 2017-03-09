@@ -6,8 +6,24 @@ The main contribution of this book is in the event-generating macro
 \texttt{evl\-/meta\-/extract\-/contextual\-/facts} and
 \texttt{evl\-/meta\-/extract\-/global\-/facts} that expand to meta-extract
 hypotheses where the \texttt{obj} argument is a call of a ``bad-guy'' (Skolem)
+% Reviewer 1 says:
+%%% section 3, line 5: I understand the "bad-guy" from experience with other ACL2
+%%% utilities and with defun-sk, but I wonder if it should be explained in slightly
+%%% more detail.
+% That's a fair point.  In fact, although I get the bad-guy idea in
+% general (pick a counterexample if there is one, and then by asserting
+% that it's not a counterexample one is asserting the universal
+% closure), I'm not completely sure that I'm getting it here.  I
+% *think* we're picking an obj for which
+% (evl (meta-extract-contextual-fact obj mfc state) a) fails, if there
+% is one.  I've made my edits under that assumption, but please
+% correct this if I'm wrong!
 function.  This essentially universally quantifies the \texttt{obj}
-argument:
+argument: informally, the term $obj_0 = $ {\tt (evl-meta-extract-bad-guy a mfc state)} is
+some {\tt obj} for which the formula $\varphi = $ {\tt (evl (meta-extract-contextual-fact obj
+  mfc state) a)} is false, if any such {\tt obj} exists; so by
+asserting that $\varphi$ is true for $obj_0$, we assert $(\forall obj)
+\varphi$.
 \begin{verbatim}
   (evl (meta-extract-contextual-fact
          (evl-meta-extract-bad-guy a mfc state)
@@ -58,7 +74,7 @@ of \texttt{mfc-rw+} (specifically, when \texttt{nil}, meaning
 The above rule involves the system function {\tt sublis-var}, which
 substitutes {\tt alist} into {\tt term} but reduces ground calls of
 primitive functions\footnote{By ``primitive functions'' we mean
-  built-in functions such as ({\tt binary-+} that do not have defining
+  built-in functions such as {\tt binary-+} that do not have defining
   events --- that is, those found in the ACL2 constant {\tt
     *primitive-formals-and-guards*}.} to their values.  In order to
 reason about {\tt sublis-var}, the pseudo-evaluator should support all of

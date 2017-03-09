@@ -7,7 +7,7 @@ correct, can be called by the ACL2 prover\footnote{
   proof --- but at the
   cost of a {\em trust tag} marking this use as a source of potential
   unsoundness.~\cite{trusted-cl-proc}}.
-These facilities are descended from the meta reasoning capability
+These facilities descend from the meta reasoning capability
 provided by earlier Boyer-Moore provers~\cite{meta}.  Relevant
 background can be found in earlier ACL2 papers on meta
 reasoning~\cite{meta-05} and clause processors~\cite{trusted-cl-proc},
@@ -28,8 +28,18 @@ Meta-extract is an ACL2 feature first introduced in Version 6.0
 (December, 2012).  It allows for certain facts stored in the ACL2
 world and certain ACL2 prover routines to be assumed
 correct when proving the correctness of metafunctions and clause
+% processors.  In particular, additional \textit{meta-extract hypotheses}
+% which imply the correctness of these routines and facts are allowed to
+% be present in these correctness theorems. These additional hypotheses
+%%% Reviewer 1:
+%%% meta-extract hypotheses which imply the correctness
+%%% =>
+%%% meta-extract hypotheses which are implied by the correctness
+%%% (These hypotheses are weaker than the full correctness of the ACL2 facts and
+%%% routines. NIL does imply the full correctness, but it cannot be a meta-extract
+%%% hypothesis.)
 processors.  In particular, additional \textit{meta-extract hypotheses}
-which imply the correctness of these routines and facts are allowed to
+that capture the correctness of such routines and facts are allowed to
 be present in these correctness theorems. These additional hypotheses
 preserve the soundness of metareasoning in ACL2 because they encode
 assumptions that we are already
@@ -48,18 +58,23 @@ and
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_EXTENDED-METAFUNCTIONS}{\underline{EXTENDED-METAFUNCTIONS}}.
 Also see the topic
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html?topic=ACL2\_\_\_\_META-EXTRACT}{\underline{META-EXTRACT}}
-for (additional) user-level documentation.  Note that references to
+for additional user-level documentation.  Note that references to
 documentation topics, such as those above, are underlined to denote
 hyperlinks to topics in the online
 \href{http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/index.html}{\underline{documentation}}~\cite{acl2:doc}
 for ACL2 and its books.
 
-Going forward in this paper, we will primarily address metafunctions
-rather than always referring to metafunctions and clause processors.
-The meta-extract functionality available in clause processors is a
-subset of that available to metafunctions (namely, global facts are
-available but not contextual ones), and the correctness arguments are
-analogous.
+% The changes just below address the following question from Reviewer
+% 3:
+%%% (In reference to clause processors) "global facts are available
+%%% but not contextual ones".  Why?
+This paper primarily addresses metafunctions rather than always
+referring to both metafunctions and clause processors.  The
+correctness arguments are analogous.  The meta-extract functionality
+available for clause processors is available as well for
+metafunctions.\footnote{Indeed, the {\em global facts} discussed below
+  are available for both, but {\em contextual facts} need contexts
+  that are only available below the clause level.}
 
 % Sol: I changed the title just below because if the subsection looks
 % like it's only about correctness, some might skip it, even though it
@@ -106,7 +121,7 @@ thus the metafunction is correct.
 The meta-extract feature allows certain additional hypotheses in the
 statement of the correctness theorem of a metafunction.  These meta-extract
 hypotheses are applications of the pseudo-evaluator to calls of either the
-function \texttt{meta\-/extract\-/global\-/fact+} or its less general
+function \texttt{meta\-/extract\-/global\-/fact+}, its less general
 version \texttt{meta\-/extract\-/global\-/fact}, or the function
 \texttt{meta\-/extract\-/contextual\-/fact}.
 These functions produce various
@@ -146,6 +161,9 @@ terms are equivalent.
 In Section~\ref{sec:meta-extract} we provide examples of meta-extract
 hypotheses and summary documentation of their various forms.
 Section~\ref{sec:user} presents a community book that
-provides a convenient way to use the meta-extract facility.  We then
+% Reviewer 3 wanted us to change "We then" to "We" on the next line,
+% but I think some word is needed there.  I've changed "We then" to
+% "Next we", but please feel free to change this however you like.
+provides a convenient way to use the meta-extract facility.  Next we
 present applications in Section~\ref{sec:applications} and finally, we
 conclude with Section~\ref{sec:conclusion}.
