@@ -1,0 +1,339 @@
+% Another file will have the \documentclass and then \input this one.
+% \documentclass[xcolor=x11names,compress]{beamer}
+
+%% General document %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{lipsum}
+\usepackage{ragged2e}
+\usepackage{alltt}
+\usepackage{rotating}
+\usepackage{lscape}
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{verbatim}
+\usepackage{fancyvrb}
+\usepackage{color}
+\usepackage{xspace}
+\newcommand\codeHighlightr[1]{\textcolor[rgb]{1,0,0}{\textbf{#1}}}
+\newcommand\codeHighlightg[1]{\textcolor[rgb]{0,1,0}{\textbf{#1}}}
+\newcommand\codeHighlightb[1]{\textcolor[rgb]{0,0,1}{\textbf{#1}}}
+\newcommand{\SmallSkip}{\vspace{0.5cm}\noindent}
+\newcommand{\demo}{{\color{red} [DEMO]}}
+\definecolor{darkorange}{RGB}{210,105,30}
+\usepackage[english]{babel}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% Beamer Layout %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\useoutertheme[subsection=false,shadow]{miniframes}
+\useinnertheme{default}
+\usefonttheme{serif}
+\usepackage{palatino}
+
+\setbeamerfont{title like}{shape=\scshape}
+\setbeamerfont{frametitle}{shape=\scshape}
+
+%\setbeamercolor*{lower separation line head}{bg=DeepSkyBlue4}
+\setbeamercolor*{lower separation line head}{bg=darkorange}
+\setbeamercolor*{normal text}{fg=black,bg=white}
+\setbeamercolor*{alerted text}{fg=red}
+\setbeamercolor*{example text}{fg=black}
+\setbeamercolor*{structure}{fg=black}
+
+\setbeamercolor*{palette tertiary}{fg=black,bg=black!10}
+\setbeamercolor*{palette quaternary}{fg=black,bg=black!10}
+
+\renewcommand{\(}{\begin{columns}}
+\renewcommand{\)}{\end{columns}}
+\newcommand{\<}[1]{\begin{column}{#1}}
+\renewcommand{\>}{\end{column}}
+\setbeamertemplate{footline}{\hfill\insertframenumber/\inserttotalframenumber}
+\setbeamertemplate{navigation symbols}{}
+
+% Modified from Jared (xdoc paper):
+\hypersetup{%
+   colorlinks=true,% hyperlinks will be black
+   linkcolor=blue,% added by Matt K.
+   urlcolor=blue,% added by Matt K.
+   urlbordercolor=blue,% hyperlink borders will be red
+   pdfborderstyle={/S/U/W 1.5}% border style will be underline of width 1pt
+}
+
+\definecolor{darkcyan}{cmyk}{1.0,0.2,0.2,0.2}
+
+\newcommand\mydotdot{{\color{orange} ...}}
+
+\AtBeginSection[]
+{
+   \begin{frame}
+       \frametitle{\hspace{4mm}Outline}
+       \tableofcontents[currentsection, currentsubsection]
+   \end{frame}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}
+\title{Meta-extract: Using Existing Facts in Meta-reasoning}
+%\subtitle{SUBTITLE}
+\author{
+        Matt Kaufmann (UT Austin) \\
+        Sol Swords (Centaur Technology)
+}
+\date{
+        \vspace{1cm}
+        ACL2 Workshop 2017
+}
+\titlepage
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{\hspace{4mm}Outline}
+\tableofcontents
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape Introduction}
+\begin{frame}[fragile]
+\frametitle{Introduction}
+
+\begin{itemize}
+
+\item ACL2 supports rule classes {\tt :meta} and {\tt
+    :clause-processor} that allow user-supplied extensions to the
+  prover.
+
+\item In this talk we'll focus on {\tt :meta} rules and corresponding
+  {\em metafunctions}.
+
+\item The {\em meta-extract} utilities (introduced in late 2012)
+  permit correctness of metafunctions to depend on facts extracted
+  from the {\em world} or the {\em context}.
+
+\item This talk:
+
+  \begin{itemize}
+
+  \item reviews meta reasoning;
+
+  \item gives two simple examples to illustrate meta-extract hypotheses;
+
+  \item discusses a nice short-cut;
+
+  \item summarizes some applications; and
+
+  \item points to the paper and supporting materials for more information.
+
+  \end{itemize}
+
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape Review of {\tt :Meta} Rules}
+\begin{frame}[fragile]{Review of {\tt :Meta} Rules}
+
+Perhaps the earliest example of a {\tt :meta} rule is the function
+\verb|cancel_plus-equal|, from
+community book {\tt meta/meta-plus-equal}.
+
+It cancels like terms from the equality of two sums.
+
+{\footnotesize
+\begin{verbatim}
+ACL2 !>:trans (equal (+ x y x z) (+ x z z z))
+
+(EQUAL (BINARY-+ X (BINARY-+ Y (BINARY-+ X Z)))
+       (BINARY-+ X (BINARY-+ Z (BINARY-+ Z Z))))
+
+=> *
+
+ACL2 !>(cancel_plus-equal
+        '(EQUAL (BINARY-+ X (BINARY-+ Y (BINARY-+ X Z)))
+                (BINARY-+ X (BINARY-+ Z (BINARY-+ Z Z)))))
+(EQUAL (BINARY-+ Y X) (BINARY-+ Z Z))
+ACL2 !>
+\end{verbatim}
+}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{Review of {\tt :Meta} Rules (2)}
+
+These are the key events (eliding the definition of
+\verb|cancel_plus-equal|).
+
+\begin{verbatim}
+(defevaluator ev-plus-equal ev-plus-equal-list
+  ((binary-+ x y) (fix x) (equal x y)
+   (acl2-numberp x) (if x y z)))
+
+(defun cancel_plus-equal (x)
+  (declare (xargs :guard (pseudo-termp x)))
+  ...)
+
+(defthm cancel_plus-equal-correct
+  (equal (ev-plus-equal x a)
+         (ev-plus-equal (cancel_plus-equal x) a))
+  :rule-classes ((:meta :trigger-fns (equal))))
+\end{verbatim}
+
+Let's see this rule used in a proof.
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{Review of {\tt :Meta} Rules (2)}
+
+% {\scriptsize
+{\footnotesize
+\begin{verbatim}
+ACL2 !>(include-book "meta/meta-plus-equal" :dir :system)
+....
+ACL2 !>(trace$ cancel_plus-equal)
+ ((CANCEL_PLUS-EQUAL))
+ACL2 !>(thm (implies (and (acl2-numberp z)
+                          (equal (+ x y x z) (+ x z z z)))
+                     (equal z (/ (+ x y) 2)))
+            :hints (("Goal" :in-theory (disable (tau-system)))))
+Goal'
+1> (CANCEL_PLUS-EQUAL
+    (EQUAL (BINARY-+ X (BINARY-+ X (BINARY-+ Y Z)))
+           (BINARY-+ X (BINARY-+ Z (BINARY-+ Z Z)))))
+<1 (CANCEL_PLUS-EQUAL (EQUAL (BINARY-+ X Y) (BINARY-+ Z Z)))
+....
+Proof succeeded.
+ACL2 !>
+\end{verbatim}
+}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape Example 1: Using Contexts}
+\begin{frame}[fragile]{Example 1: Using Contexts}
+
+We will explain the following {\tt :meta} rule.
+
+\begin{verbatim}
+; workshops/2017/kaufmann-swords/support/intro.lisp
+(defthm nth-symbolp-meta
+  (implies (nthmeta-ev
+            (meta-extract-contextual-fact
+             `(:typeset ,(cadr term))
+             mfc
+             state)
+            a)
+           (equal (nthmeta-ev term
+                              a)
+                  (nthmeta-ev (nth-symbolp-metafn
+                               term mfc state)
+                              a)))
+  :rule-classes ((:meta :trigger-fns (nth))))
+\end{verbatim}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape Example 2: Using Global Facts}
+\begin{frame}[fragile]{Example 2: Using Global Facts}
+
+\begin{verbatim}
+; demos/nth-update-nth-meta-extract.lisp
+(defthm nth-update-nth-meta-rule-st
+  (implies
+   (and (nth-update-nth-ev ; (f (update-g val st))
+         (meta-extract-global-fact
+          (list :formula (car term)) state)
+         (meta-extract-alist term a state))
+        ...)
+   (equal (nth-update-nth-ev term a)
+          (nth-update-nth-ev
+           (nth-update-nth-meta-fn term mfc state)
+           a)))
+  :hints ...
+  :rule-classes ((:meta :trigger-fns ...)))
+\end{verbatim}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape A Nice Short-cut}
+\begin{frame}[fragile] {A Nice Short-cut}
+
+The utility {\tt def-meta-extract}, which defines two
+hypotheses that imply all contextual and global facts, respectively.
+
+\begin{itemize}
+
+\item {\tt (evl-meta-extract-contextual-facts a)}
+
+\item {\tt (evl-meta-extract-ev-global-facts)}
+
+\end{itemize}
+
+This is provided by community book {\tt
+  clause-processors/meta-extract-user.lisp}, thus minimizing the ACL2
+trusted code base.
+
+Here is an example showing the power of (one of) these hypotheses.
+
+\begin{verbatim}
+(defthm evl-meta-extract-formula
+   (implies (and (evl-meta-extract-ev-global-facts)
+                 (equal (w st) (w state)))
+            (evl (meta-extract-formula name st) a)))
+\end{verbatim}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape Some Applications}
+\begin{frame}[fragile] {Some Applications}
+
+\begin{itemize}
+
+\item The GL symbolic interpreter uses meta-extract hypotheses to
+  call functions without additional proof obligations.
+
+\item The community book {\tt centaur/misc/bound-rewriter.lisp}
+  provides a tool for solving certain inequalities:
+
+\item A meta rule for context-sensitive rewriting (like Greve's
+  ``nary'' framework is defined in {\tt centaur/misc/context-rw.lisp}.
+
+\item Others....
+
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{\scshape Conclusion}
+\begin{frame}[fragile] {Conclusion}
+
+Some concluding thoughts....
+
+\begin{itemize}
+
+\item This talk is just an introduction; meta reasoning is a bit
+  complex to absorb in real time!
+
+\item The paper develops the ideas from this talk more thoroughly,
+  with more illustrative examples.  See also: \\
+  {\tt books/workshops/2017/kaufmann-swords/support/README}.
+
+\item If you use GL then you are already taking advantage of
+  meta-extract.
+
+\end{itemize}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}

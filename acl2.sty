@@ -1,0 +1,36 @@
+{\obeylines
+
+\gdef\looker{\ifx\next\lineending\vskip-1sp%
+\noindent\else%
+\ifx\next\end\vskip-1sp\let^^M\ \else%
+\vskip0pt\noindent\fi\fi}
+
+\gdef\lineending{\parfillskip=0pt plus1fil\relax\futurelet\next\looker}
+
+\gdef\alg{\medskip
+\def\note##1{\parfillskip=0pt\hfill##1}\def\ {\quad}%
+\baselineskip=12pt\parskip=2pt\obeylines\let^^M=\lineending}
+
+
+\gdef\endalg{\medskip}
+
+\gdef\alg{\bgroup\obeylines\obeyspaces\def\ {\quad}
+\def\note##1{\parfillskip=0pt\hfill##1}
+\leftskip=0pc\relax\let^^M=\lineending\relax}
+
+\gdef\endalg{\medskip\egroup}
+
+}% end of obeylines
+%\newenvironment{acl2-m}{\begin{alg}\tt}{\end{alg}\noindent}
+%\newenvironment{acl2-m2}{\begin{alg}\tt}{\end{alg} \hspace{-16pt}}
+%\newenvironment{acl2}{\begin{alg}\tt}{\end{alg}}
+\newenvironment{acl2ns}{\begin{alg}\frenchspacing\tt}{\end{alg}}
+%\newenvironment{acl2-base}{\begin{alg}\tt}{\end{alg}}
+%\newenvironment{acl2}{\begin{acl2-base}}{\parskip=0pt\end{acl2-base}\parskip=0pt}
+\newenvironment{acl2}{\begin{acl2ns}\mbox{ }\vspace{-8pt}}%
+  {\end{acl2ns}}
+%\newenvironment{acl2p}{\begin{acl2}}{\end{acl2} \mbox{ }\\ \noindent}
+\newenvironment{acl2p}{\begin{acl2}}{\end{acl2} \vspace{-14pt} \mbox{ } \\ \noindent}
+%\newenvironment{acl2p}{\begin{alg}\tt}{\noindent\parskip=0pt\end{alg}%
+%  \noindent\parskip=0pt}
+%\newenvironment{acl2o}{\small \begin{verbatim}}{\end{verbatim}}
