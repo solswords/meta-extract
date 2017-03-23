@@ -58,11 +58,12 @@ reasoning.\footnote{For details such as the meaning of {\tt :forcep
     mfc-ts}}
 to deduce the possible types of $n$.  If that type-set equals {\tt
   *ts-symbol*} then that term must evaluate to a symbol, and the term
-can be reduced to {\tt (car $x$)}.\footnote{This is an unnecessarily strong check: it means ACL2's determination
-was that the possible types of $n$ included all three of the basic
-types {\tt T}, {\tt NIL}, and non-Boolean symbols.  If ACL2 was able
-to rule out any of those three possibilities, the function would
-fail to simplify the term.}
+can be reduced to {\tt (car $x$)}.\footnote{Requiring the type-set to
+  equal \texttt{*ts-symbol*} is an an unnecessarily strong check,
+  chosen merely for ease of presentation: it requires that ACL2's
+  determination of the term's possible types include all three of the
+  basic
+  types {\tt T}, {\tt NIL}, and non-Boolean symbols.}
 
 Now we can present a meta rule with a meta-extract
 hypothesis.  Without that hypothesis the formula below is
@@ -359,6 +360,16 @@ things: it disables all of the stobj's accessors and updaters, and it
 proves a meta rule that simplifies every term of the form {\tt ($r$
   ($w$ $v$ $s$))}, where $r$ and $w$ are an accessor and updater,
 respectively, for the stobj $s$.
+
+The meta rule above uses three \texttt{meta-extract-global-fact}
+hypotheses corresponding to uses of three particular facts.
+Enumerating all of the facts potentially used in the metafunction in
+this way could easily become unwieldy; in Section \ref{sec:user} we
+discuss a utility that solves this problem, allowing one
+\texttt{meta-extract-global-fact} hypothesis and one
+\texttt{meta-extract-contextual-fact} hypothesis to cover all of the
+facts that might be used.
+
 %%% We omit some details here, including
 %%% the definition of function {\tt stobj-accessors-and-updaters}, which
 %%% as its name suggests, returns a list of all stobj accessors and
@@ -418,7 +429,7 @@ Section~\ref{sec:intuitive}) used in a meta rule.  The two primary
 forms of meta-extract hypotheses that can be used in a meta rule are
 as follows.  In the first, {\tt aa} represents an arbitrary term; in
 the second, {\tt a} must be the second argument of the two calls of
-the (pseudo-)evaluator in the conclusion of the theorem.
+the pseudo-evaluator in the conclusion of the theorem.
 
 \begin{verbatim}
     (evl (meta-extract-global-fact obj state) aa)
