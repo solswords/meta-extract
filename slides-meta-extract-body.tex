@@ -107,16 +107,25 @@
 \item ACL2 supports rule classes {\tt :meta} and {\tt
     :clause-processor} that allow user-supplied extensions to the
   prover.
-
-\item In this talk we'll focus on {\tt :meta} rules and corresponding
-  {\em metafunctions}.
-
+  
+  \begin{itemize}
+  \item In this talk we'll focus on {\tt :meta} rules and corresponding
+    {\em metafunctions}.
+  \end{itemize}
+  
 \item The {\em meta-extract} utilities (introduced in late 2012)
   permit correctness of metafunctions to depend on facts extracted
   from the {\em world} or the {\em context}.
 
-\item This talk:
+  \begin{itemize}
+  \item Metafunctions can access both; clause processors have only a world, not a context.
+  \item The facts will be \textit{extracted} at runtime, but \textit{assumed correct} when proving the metafunction.
+  \end{itemize}
+\end{itemize}
+\end{frame}
 
+\begin{frame}[fragile]
+\frametitle{This talk}
   \begin{itemize}
 
   \item reviews meta reasoning;
@@ -131,15 +140,13 @@
 
   \end{itemize}
 
-\end{itemize}
-
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{\scshape Review of {\tt :Meta} Rules}
+\section[\scshape Review]{\scshape Review of {\tt :Meta} Rules}
 \begin{frame}[fragile]{Review of {\tt :Meta} Rules}
 
-Perhaps the earliest example of a {\tt :meta} rule is the function
+The canonical example of a {\tt :meta} rule is
 \verb|cancel_plus-equal|, from
 community book {\tt meta/meta-plus-equal}.
 
@@ -166,24 +173,29 @@ ACL2 !>
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}[fragile]{Review of {\tt :Meta} Rules (2)}
 
-These are the key events (eliding the definition of
-\verb|cancel_plus-equal|).
-
+Key events:
+\begin{itemize}
+\item Define an evaluator:
 \begin{verbatim}
-(defevaluator ev-plus-equal ev-plus-equal-list
-  ((binary-+ x y) (fix x) (equal x y)
-   (acl2-numberp x) (if x y z)))
-
+(defevaluator ev-plus-equal ...)
+\end{verbatim}
+  
+\item Define the metafunction:
+\begin{verbatim}
 (defun cancel_plus-equal (x)
   (declare (xargs :guard (pseudo-termp x)))
   ...)
-
-(defthm cancel_plus-equal-correct
-  (equal (ev-plus-equal x a)
-         (ev-plus-equal (cancel_plus-equal x) a))
-  :rule-classes ((:meta :trigger-fns (equal))))
 \end{verbatim}
 
+\item Prove the metafunction correct w.r.t. the evaluator:
+\begin{verbatim}
+(defthm cancel_plus-equal-correct
+  (equal
+   (ev-plus-equal x a)
+   (ev-plus-equal (cancel_plus-equal x) a))
+  :rule-classes ((:meta :trigger-fns (equal))))
+\end{verbatim}
+\end{itemize}
 Let's see this rule used in a proof.
 
 \end{frame}
@@ -218,22 +230,53 @@ ACL2 !>
 \section{\scshape Example 1: Using Contexts}
 \begin{frame}[fragile]{Example 1: Using Contexts}
 
-We will explain the following {\tt :meta} rule.
+Consider this metafunction:
+\begin{verbatim}
+(defun nth-symbolp-metafn (term mfc state)
+  (declare (xargs :stobjs state))
+  (case-match term
+    (('nth n x)
+     (if (equal (mfc-ts n mfc state :forcep nil)
+                *ts-symbol*)
+         (list 'car x)
+       term))
+    (& term)))
+\end{verbatim}
+Approximately: ``If term is \verb|(nth n x)| and \verb|n| is
+known to be a symbol in the current context, replace it with
+\verb|(car x)|.''
+
+\end{frame}
+
+\begin{frame}[fragile]{Example 1: Using Contexts}
+\begin{itemize}
+\item How can we prove this correct?
+\item Before meta-extract we'd need to somehow verify that \texttt{mfc-ts} was ``telling the truth''
+  \begin{itemize}
+  \item E.g., have a hypothesis metafunction that produces the corresponding assumption.
+  \end{itemize}
+\item Meta-extract lets you assume this while proving your metafunction correct.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Example 1: Using Contexts}
+Correctness theorem for \texttt{nth-symbolp-metafn}:
 
 \begin{verbatim}
 ; workshops/2017/kaufmann-swords/support/intro.lisp
 (defthm nth-symbolp-meta
-  (implies (nthmeta-ev
-            (meta-extract-contextual-fact
-             `(:typeset ,(cadr term))
-             mfc
-             state)
-            a)
-           (equal (nthmeta-ev term
-                              a)
-                  (nthmeta-ev (nth-symbolp-metafn
-                               term mfc state)
-                              a)))
+  (implies
+   ;; Meta-extract hypothesis:
+   (nthmeta-ev (meta-extract-contextual-fact
+                 `(:typeset ,(cadr term))
+                 mfc 
+                 state)
+               a)
+   ;; Standard meta rule conclusion:
+   (equal (nthmeta-ev term a)
+          (nthmeta-ev (nth-symbolp-metafn
+                       term mfc state)
+                      a)))
   :rule-classes ((:meta :trigger-fns (nth))))
 \end{verbatim}
 
