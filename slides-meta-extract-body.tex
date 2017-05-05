@@ -53,6 +53,8 @@
 \setbeamertemplate{footline}{\hfill\insertframenumber/\inserttotalframenumber}
 \setbeamertemplate{navigation symbols}{}
 
+%\setbeamersize{text margin right=20pt}
+
 % Modified from Jared (xdoc paper):
 \hypersetup{%
    colorlinks=true,% hyperlinks will be black
@@ -120,6 +122,7 @@
   \begin{itemize}
   \item Metafunctions can access both; clause processors have only a world, not a context.
   \item The facts will be \textit{extracted} at runtime, but \textit{assumed correct} when proving the metafunction.
+  \item Therefore, routines can use facts that were introduced \textit{after} they were proved correct.
   \end{itemize}
 \end{itemize}
 \end{frame}
@@ -227,11 +230,11 @@ ACL2 !>
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{\scshape Example 1: Using Contexts}
+\section[\scshape Example 1]{\scshape Example 1: Using Contexts}
 \begin{frame}[fragile]{Example 1: Using Contexts}
 
 Consider this metafunction:
-\begin{verbatim}
+\begin{Verbatim}[frame=none, framesep=5pt]
 (defun nth-symbolp-metafn (term mfc state)
   (declare (xargs :stobjs state))
   (case-match term
@@ -241,12 +244,13 @@ Consider this metafunction:
          (list 'car x)
        term))
     (& term)))
-\end{verbatim}
+\end{Verbatim}
 Approximately: ``If term is \verb|(nth n x)| and \verb|n| is
 known to be a symbol in the current context, replace it with
 \verb|(car x)|.''
 
 \end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]{Example 1: Using Contexts}
 \begin{itemize}
@@ -258,11 +262,12 @@ known to be a symbol in the current context, replace it with
 \item Meta-extract lets you assume this while proving your metafunction correct.
 \end{itemize}
 \end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]{Example 1: Using Contexts}
 Correctness theorem for \texttt{nth-symbolp-metafn}:
 
-\begin{verbatim}
+\begin{Verbatim}[formatcom=\small]
 ; workshops/2017/kaufmann-swords/support/intro.lisp
 (defthm nth-symbolp-meta
   (implies
@@ -278,12 +283,59 @@ Correctness theorem for \texttt{nth-symbolp-metafn}:
                        term mfc state)
                       a)))
   :rule-classes ((:meta :trigger-fns (nth))))
-\end{verbatim}
+\end{Verbatim}
 
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{Example 1: Meta-extract Hypothesis}
+  \texttt{Meta-extract-contextual-fact}:
+\begin{itemize}
+\item Returns various terms expressing facts known under a given context.
+\item Only produce terms that are known true.
+\item Meta rule theorems are allowed to assume the terms it produces
+  evaluate to true.
+\end{itemize}
+Part of the definition:
+\begin{Verbatim}[formatcom=\small]
+(case-match obj
+  ((':typeset term . &) ; mfc-ts produces correct results
+   `(typespec-check
+     ',(mfc-ts term mfc state :forcep nil :ttreep nil)
+     ,term))
+\end{Verbatim}
+\end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{\scshape Example 2: Using Global Facts}
+\begin{frame}[fragile]{Meta-Extract-Contextual-Fact}
+Supports:
+\begin{itemize}
+\item Typeset reasoning (\texttt{mfc-ts})
+\item Rewriting (\texttt{mfc-rw},\ \ \texttt{mfc-rw+},\ \ \texttt{mfc-relieve-hyp})
+\item Linear arithmetic (\texttt{mfc-ap})
+\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[\scshape Example 2]{\scshape Example 2: Using Global Facts}
+\begin{frame}[fragile]{Example 2: Using Global Facts}
+
+Goal: Rewrite stobj \texttt{(accessor (updater val foo\$))} terms without either:
+\begin{itemize}
+\item proving $n^2$ individual rules per stobj
+\item enabling accessors/updaters to just expand to \texttt{nth}
+\end{itemize}
+An approach: \texttt{nth-update-nth-ev-meta-fn} checks that
+\texttt{accessor} is defined as a call of \texttt{nth} and
+\texttt{updater} is defined as a call of \texttt{update-nth} and
+rewrites accordingly.
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{Example 2: Using Global Facts}
+  Key: Function definitions can be retrieved from the world using
+  \texttt{meta-extract-formula} and \textit{assumed correct} using
+  a \texttt{meta-extract-global-fact} hyp.
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \begin{frame}[fragile]{Example 2: Using Global Facts}
 
 \begin{verbatim}
@@ -304,11 +356,21 @@ Correctness theorem for \texttt{nth-symbolp-metafn}:
 \end{verbatim}
 
 \end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\begin{frame}[fragile]{Meta-Extract-Global-Fact}
+Supports:
+\begin{itemize}
+\item Theorem bodies, function definitions, and constraints (\texttt{meta-extract-formula})
+\item Rewrite rules from functions' \texttt{lemmas} properties
+\item Evaluation of ground function calls (\texttt{magic-ev-fncall}).
+\end{itemize}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{\scshape A Nice Short-cut}
+\section[\scshape Shortcut]{\scshape A Nice Short-cut}
 \begin{frame}[fragile] {A Nice Short-cut}
-
+Community book ``clause-processors/meta-extract-user'' provides a utility
+\texttt{def-meta-extract}, 
 The utility {\tt def-meta-extract}, which defines two
 hypotheses that imply all contextual and global facts, respectively.
 
@@ -336,7 +398,7 @@ Here is an example showing the power of (one of) these hypotheses.
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{\scshape Some Applications}
+\section[\scshape Applications]{\scshape Some Applications}
 \begin{frame}[fragile] {Some Applications}
 
 \begin{itemize}
