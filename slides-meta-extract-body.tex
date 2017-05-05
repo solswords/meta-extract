@@ -368,6 +368,25 @@ Supports:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section[\scshape Shortcut]{\scshape A Nice Short-cut}
+\begin{frame}[fragile] {Shortcut}
+\begin{Verbatim}[fontsize=\small]
+(my-evl (meta-extract-contextual-fact obj mfc state) a)
+(my-evl (meta-extract-global-fact obj state) alist)
+\end{Verbatim}
+The above meta-extract hyps are accepted with \textit{any term} in place of \texttt{obj} and \texttt{alist}.
+\begin{Verbatim}[fontsize=\small]
+(defchoose my-evl-contextual-badguy (obj) (a mfc state)
+  (not (my-evl (meta-extract-contextual-fact
+                obj mfc state)
+               a)))
+\end{Verbatim}
+\begin{itemize}
+\item Means: ``If there is an obj such that the evaluation of the meta-extract is false, return one''
+\item Using this as the \texttt{obj} implies the hyp for all \texttt{obj}.
+\item $\rightarrow$ At most two meta-extract hyps cover all uses.
+\end{itemize}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \begin{frame}[fragile] {A Nice Short-cut}
 Community book ``clause-processors/meta-extract-user'' provides a utility
 \texttt{def-meta-extract}, 
