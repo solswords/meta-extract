@@ -94,11 +94,11 @@
 }
 \titlepage
 \end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{frame}{\hspace{4mm}Outline}
-\tableofcontents
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{frame}{\hspace{4mm}Outline}
+% \tableofcontents
+% \end{frame}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{\scshape Introduction}
 \begin{frame}[fragile]
@@ -106,23 +106,21 @@
 
 \begin{itemize}
 
-\item ACL2 supports rule classes {\tt :meta} and {\tt
-    :clause-processor} that allow user-supplied extensions to the
-  prover.
-  
-  \begin{itemize}
-  \item In this talk we'll focus on {\tt :meta} rules and corresponding
-    {\em metafunctions}.
-  \end{itemize}
-  
-\item The {\em meta-extract} utilities (introduced in late 2012)
-  permit correctness of metafunctions to depend on facts extracted
-  from the {\em world} or the {\em context}.
+\item ACL2 supports two kinds of user-defined, verified proof routines:
+\begin{itemize}
+\item \texttt{:meta} rule class: \texttt{term} $\rightarrow$ \texttt{term}, invoked by the rewriter, 
+\item \texttt{:clause-processor} rule class: \texttt{clause} $\rightarrow$ \texttt{clauses}, invoked by hints.
+\end{itemize}
+% \item Must prove correctness with respect to an \textit{evaluator} which support a fixed set of functions.
+\item Previously could extract facts from the world and use built-in proof tools, but could not assume them correct.
+\item Now (post-2012) these facts/tools may be assumed correct via \textit{meta-extract hypotheses} when proving soundness of metafunctions.
+  % from the {\em world} or the {\em context}.
 
   \begin{itemize}
-  \item Metafunctions can access both; clause processors have only a world, not a context.
-  \item The facts will be \textit{extracted} at runtime, but \textit{assumed correct} when proving the metafunction.
-  \item Therefore, routines can use facts that were introduced \textit{after} they were proved correct.
+  % \item Metafunctions can use  both; clause processors have only a world, not a context.
+  % \item The facts will be \textit{extracted} at runtime, but \textit{assumed correct} when proving the metafunction.
+  % \item Therefore, routines can use facts that were introduced \textit{after} they were proved correct.
+  \item $\star\star\star$ At run time, a metafunction may use facts that were not available when it was proved correct! $\star\star\star$
   \end{itemize}
 \end{itemize}
 \end{frame}
@@ -131,15 +129,15 @@
 \frametitle{This talk}
   \begin{itemize}
 
-  \item reviews meta reasoning;
+  \item reviews meta reasoning
 
-  \item gives two simple examples to illustrate meta-extract hypotheses;
+  \item gives two simple examples to illustrate meta-extract hypotheses
 
-  \item discusses a nice short-cut;
+  \item discusses a nice shortcut
 
-  \item summarizes some applications; and
+  \item summarizes some applications %; and
 
-  \item points to the paper and supporting materials for more information.
+%  \item points to the paper and supporting materials for more information.
 
   \end{itemize}
 
@@ -149,11 +147,9 @@
 \section[\scshape Review]{\scshape Review of {\tt :Meta} Rules}
 \begin{frame}[fragile]{Review of {\tt :Meta} Rules}
 
-The canonical example of a {\tt :meta} rule is
-\verb|cancel_plus-equal|, from
-community book {\tt meta/meta-plus-equal}.
-
-It cancels like terms from the equality of two sums.
+Canonical example of a {\tt :meta} rule:\\
+\verb|cancel_plus-equal| {\small (from ``books/meta/meta-plus-equal.lisp'')}
+cancels like terms from the equality of two sums.
 
 {\footnotesize
 \begin{verbatim}
@@ -168,7 +164,6 @@ ACL2 !>(cancel_plus-equal
         '(EQUAL (BINARY-+ X (BINARY-+ Y (BINARY-+ X Z)))
                 (BINARY-+ X (BINARY-+ Z (BINARY-+ Z Z)))))
 (EQUAL (BINARY-+ Y X) (BINARY-+ Z Z))
-ACL2 !>
 \end{verbatim}
 }
 
@@ -181,13 +176,12 @@ Key events:
 \item Define an evaluator:
 \begin{verbatim}
 (defevaluator ev-plus-equal ...)
+   (ev-plus-equal term alist) --> value
 \end{verbatim}
   
 \item Define the metafunction:
 \begin{verbatim}
-(defun cancel_plus-equal (x)
-  (declare (xargs :guard (pseudo-termp x)))
-  ...)
+(defun cancel_plus-equal (x) ...)
 \end{verbatim}
 
 \item Prove the metafunction correct w.r.t. the evaluator:
@@ -230,8 +224,92 @@ ACL2 !>
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[\scshape Example 1]{\scshape Example 1: Using Contexts}
-\begin{frame}[fragile]{Example 1: Using Contexts}
+\section[\scshape Example 1]{\scshape Example 1: Using Global Facts}
+\begin{frame}[fragile]{Example 1: Using Global Facts}
+
+Goal: Rewrite stobj \texttt{(accessor (updater val foo\$))} terms without either:
+\begin{itemize}
+\item proving $n^2$ individual rules per stobj
+\item enabling accessors/updaters to expand to \texttt{nth}/\texttt{update-nth}
+\end{itemize}
+An approach: \texttt{nth-update-nth-ev-meta-fn} checks that
+\texttt{accessor} is defined as a call of \texttt{nth} and
+\texttt{updater} is defined as a call of \texttt{update-nth} and
+rewrites accordingly.
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{Example 1: Using Global Facts}
+\begin{itemize}
+\item Can look up function definitons from the world.
+\item But: how can we prove this correct?
+\item Before meta-extract we'd need to somehow verify that the definitions found in the world were correct
+  \begin{itemize}
+  \item E.g., have a hypothesis metafunction that produces the corresponding assumption.
+  \end{itemize}
+\item Meta-extract lets you assume this while proving your metafunction correct.
+\item Accessor \& updater functions don't need to be known by evaluator
+\begin{itemize}
+  \item Can prove it operates correctly even on functions that haven't been defined yet!
+\end{itemize}
+\end{itemize}
+\end{frame}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \begin{frame}[fragile]{Example 1: Using Global Facts}
+%   Key: Function definitions can be retrieved from the world using
+%   \texttt{meta-extract-formula} and \textit{assumed correct} using
+%   a \texttt{meta-extract-global-fact} hyp.
+% \end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\begin{frame}[fragile]{Example 1: Using Global Facts}
+
+\begin{verbatim}
+; demos/nth-update-nth-meta-extract.lisp
+(defthm nth-update-nth-meta-rule-st
+  (implies
+   (and (nth-update-nth-ev ; (f (update-g val st))
+         (meta-extract-global-fact
+          (list :formula (car term)) state)
+         (meta-extract-alist term a state))
+        ...)
+   (equal (nth-update-nth-ev term a)
+          (nth-update-nth-ev
+           (nth-update-nth-meta-fn term mfc state)
+           a)))
+  :hints ...
+  :rule-classes ((:meta :trigger-fns ...)))
+\end{verbatim}
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}[fragile]{Example 1: Meta-extract Hypothesis}
+  \texttt{Meta-extract-global-fact}:
+\begin{itemize}
+\item Returns various terms expressing known facts.
+\item Only produces terms that are known true.
+\item Meta rule/clause processor theorems are allowed to assume the terms it produces
+  evaluate to true as a special hypothesis.
+\end{itemize}
+Part of the definition:
+\begin{Verbatim}[formatcom=\small]
+(case-match obj
+  ((':formula name)
+   (meta-extract-formula name st))
+  ...)
+\end{Verbatim}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\begin{frame}[fragile]{Meta-Extract-Global-Fact}
+Supports:
+\begin{itemize}
+\item Theorem bodies, function definitions, and constraints (\texttt{meta-extract-formula})
+\item Rewrite rules from functions' \texttt{lemmas} properties
+\item Evaluation of ground function calls (\texttt{magic-ev-fncall}).
+\end{itemize}
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[\scshape Example 2]{\scshape Example 2: Using Contexts}
+\begin{frame}[fragile]{Example 2: Using Contexts}
 
 Consider this metafunction:
 \begin{Verbatim}[frame=none, framesep=5pt]
@@ -246,13 +324,13 @@ Consider this metafunction:
     (& term)))
 \end{Verbatim}
 Approximately: ``If term is \verb|(nth n x)| and \verb|n| is
-known to be a symbol in the current context, replace it with
+known to be a symbol in the current context, rewrite term to
 \verb|(car x)|.''
 
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Example 1: Using Contexts}
+\begin{frame}[fragile]{Example 2: Using Contexts}
 \begin{itemize}
 \item How can we prove this correct?
 \item Before meta-extract we'd need to somehow verify that \texttt{mfc-ts} was ``telling the truth''
@@ -264,7 +342,7 @@ known to be a symbol in the current context, replace it with
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]{Example 1: Using Contexts}
+\begin{frame}[fragile]{Example 2: Using Contexts}
 Correctness theorem for \texttt{nth-symbolp-metafn}:
 
 \begin{Verbatim}[formatcom=\small]
@@ -287,11 +365,11 @@ Correctness theorem for \texttt{nth-symbolp-metafn}:
 
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{frame}[fragile]{Example 1: Meta-extract Hypothesis}
+\begin{frame}[fragile]{Example 2: Meta-extract Hypothesis}
   \texttt{Meta-extract-contextual-fact}:
 \begin{itemize}
 \item Returns various terms expressing facts known under a given context.
-\item Only produce terms that are known true.
+\item Only produces terms that are known true.
 \item Meta rule theorems are allowed to assume the terms it produces
   evaluate to true.
 \end{itemize}
@@ -316,59 +394,8 @@ Supports:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[\scshape Example 2]{\scshape Example 2: Using Global Facts}
-\begin{frame}[fragile]{Example 2: Using Global Facts}
-
-Goal: Rewrite stobj \texttt{(accessor (updater val foo\$))} terms without either:
-\begin{itemize}
-\item proving $n^2$ individual rules per stobj
-\item enabling accessors/updaters to just expand to \texttt{nth}
-\end{itemize}
-An approach: \texttt{nth-update-nth-ev-meta-fn} checks that
-\texttt{accessor} is defined as a call of \texttt{nth} and
-\texttt{updater} is defined as a call of \texttt{update-nth} and
-rewrites accordingly.
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{frame}[fragile]{Example 2: Using Global Facts}
-  Key: Function definitions can be retrieved from the world using
-  \texttt{meta-extract-formula} and \textit{assumed correct} using
-  a \texttt{meta-extract-global-fact} hyp.
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\begin{frame}[fragile]{Example 2: Using Global Facts}
-
-\begin{verbatim}
-; demos/nth-update-nth-meta-extract.lisp
-(defthm nth-update-nth-meta-rule-st
-  (implies
-   (and (nth-update-nth-ev ; (f (update-g val st))
-         (meta-extract-global-fact
-          (list :formula (car term)) state)
-         (meta-extract-alist term a state))
-        ...)
-   (equal (nth-update-nth-ev term a)
-          (nth-update-nth-ev
-           (nth-update-nth-meta-fn term mfc state)
-           a)))
-  :hints ...
-  :rule-classes ((:meta :trigger-fns ...)))
-\end{verbatim}
-
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\begin{frame}[fragile]{Meta-Extract-Global-Fact}
-Supports:
-\begin{itemize}
-\item Theorem bodies, function definitions, and constraints (\texttt{meta-extract-formula})
-\item Rewrite rules from functions' \texttt{lemmas} properties
-\item Evaluation of ground function calls (\texttt{magic-ev-fncall}).
-\end{itemize}
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[\scshape Shortcut]{\scshape A Nice Short-cut}
-\begin{frame}[fragile] {Shortcut}
+\section[\scshape Shortcut]{\scshape A Nice Shortcut}
+\begin{frame}[fragile] {A Nice Shortcut}
 \begin{Verbatim}[fontsize=\small]
 (my-evl (meta-extract-contextual-fact obj mfc state) a)
 (my-evl (meta-extract-global-fact obj state) alist)
@@ -387,32 +414,23 @@ The above meta-extract hyps are accepted with \textit{any term} in place of \tex
 \end{itemize}
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\begin{frame}[fragile] {A Nice Short-cut}
-Community book ``clause-processors/meta-extract-user'' provides a utility
-\texttt{def-meta-extract}, 
-The utility {\tt def-meta-extract}, which defines two
-hypotheses that imply all contextual and global facts, respectively.
-
+\begin{frame}[fragile] {A Nice Shortcut}
+Community book ``clause-processors/meta-extract-user'' defines event-generating macro
+\texttt{def-meta-extract}, which produces:
 \begin{itemize}
-
-\item {\tt (evl-meta-extract-contextual-facts a)}
-
-\item {\tt (evl-meta-extract-ev-global-facts)}
-
+\item bad guy functions for a given evaluator
+\item macros for meta-extract hyps using bad-guys
+\item theorems showing how these hyps imply the correctness of various tools/facts.
 \end{itemize}
 
-This is provided by community book {\tt
-  clause-processors/meta-extract-user.lisp}, thus minimizing the ACL2
-trusted code base.
+E.g., 
 
-Here is an example showing the power of (one of) these hypotheses.
-
-\begin{verbatim}
-(defthm evl-meta-extract-formula
-   (implies (and (evl-meta-extract-ev-global-facts)
+\begin{Verbatim}[fontsize=\small]
+(defthm my-evl-meta-extract-formula
+   (implies (and (my-evl-meta-extract-global-facts)
                  (equal (w st) (w state)))
-            (evl (meta-extract-formula name st) a)))
-\end{verbatim}
+            (my-evl (meta-extract-formula name st) a)))
+\end{Verbatim}
 
 \end{frame}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -422,14 +440,15 @@ Here is an example showing the power of (one of) these hypotheses.
 
 \begin{itemize}
 
-\item The GL symbolic interpreter uses meta-extract hypotheses to
-  call functions without additional proof obligations.
+\item The GL symbolic interpreter uses meta-extract hypotheses to call
+  functions, use rewrite rules, etc., without additional proof
+  obligations
 
 \item The community book {\tt centaur/misc/bound-rewriter.lisp}
-  provides a tool for solving certain inequalities:
+  provides a tool for solving certain inequalities
 
 \item A meta rule for context-sensitive rewriting (like Greve's
-  ``nary'' framework is defined in {\tt centaur/misc/context-rw.lisp}.
+  ``nary'' framework) is defined in {\tt centaur/misc/context-rw.lisp}
 
 \item Others....
 
@@ -449,8 +468,7 @@ Some concluding thoughts....
   complex to absorb in real time!
 
 \item The paper develops the ideas from this talk more thoroughly,
-  with more illustrative examples.  See also: \\
-  {\tt books/workshops/2017/kaufmann-swords/support/README}.
+  with more illustrative examples.
 
 \item If you use GL then you are already taking advantage of
   meta-extract.
